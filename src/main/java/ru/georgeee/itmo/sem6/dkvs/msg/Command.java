@@ -1,4 +1,4 @@
-package ru.georgeee.itmo.sem6.dkvs.connectivity.msg;
+package ru.georgeee.itmo.sem6.dkvs.msg;
 
 import lombok.Getter;
 

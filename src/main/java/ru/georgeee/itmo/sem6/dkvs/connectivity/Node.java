@@ -10,11 +10,11 @@ import ru.georgeee.itmo.sem6.dkvs.Utils;
 import ru.georgeee.itmo.sem6.dkvs.config.NodeConfiguration;
 import ru.georgeee.itmo.sem6.dkvs.config.Role;
 import ru.georgeee.itmo.sem6.dkvs.config.SystemConfiguration;
-import ru.georgeee.itmo.sem6.dkvs.connectivity.msg.Message;
+import ru.georgeee.itmo.sem6.dkvs.msg.Message;
 
 import java.util.*;
 
-import static ru.georgeee.itmo.sem6.dkvs.connectivity.msg.Message.Type.*;
+import static ru.georgeee.itmo.sem6.dkvs.msg.Message.Type.*;
 
 public class Node {
     private static final Logger log = LoggerFactory.getLogger(Node.class);

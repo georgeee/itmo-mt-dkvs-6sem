@@ -1,10 +1,10 @@
-package ru.georgeee.itmo.sem6.dkvs.connectivity.msg;
+package ru.georgeee.itmo.sem6.dkvs.msg;
 
 import lombok.Getter;
-import ru.georgeee.itmo.sem6.dkvs.connectivity.msg.data.DecisionMessageData;
-import ru.georgeee.itmo.sem6.dkvs.connectivity.msg.data.ProposeMessageData;
-import ru.georgeee.itmo.sem6.dkvs.connectivity.msg.data.RequestMessageData;
-import ru.georgeee.itmo.sem6.dkvs.connectivity.msg.data.ResponseMessageData;
+import ru.georgeee.itmo.sem6.dkvs.msg.data.DecisionMessageData;
+import ru.georgeee.itmo.sem6.dkvs.msg.data.ProposeMessageData;
+import ru.georgeee.itmo.sem6.dkvs.msg.data.RequestMessageData;
+import ru.georgeee.itmo.sem6.dkvs.msg.data.ResponseMessageData;
 
 public class Message {
 
@@ -60,6 +60,7 @@ public class Message {
 
     public enum Type {
         REQUEST, RESPONSE, DECISION, PROPOSE,
-        P1A, P1B, P2A, P2B, ADOPTED, PREEMPTED
+        P1A, P1B, P2A, P2B, ADOPTED, PREEMPTED,
+        PING, PONG
     }
 }

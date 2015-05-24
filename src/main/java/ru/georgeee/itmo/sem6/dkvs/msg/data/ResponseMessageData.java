@@ -1,9 +1,9 @@
-package ru.georgeee.itmo.sem6.dkvs.connectivity.msg.data;
+package ru.georgeee.itmo.sem6.dkvs.msg.data;
 
 import lombok.Getter;
-import ru.georgeee.itmo.sem6.dkvs.connectivity.msg.Message;
-import ru.georgeee.itmo.sem6.dkvs.connectivity.msg.MessageParsingException;
-import ru.georgeee.itmo.sem6.dkvs.connectivity.msg.OpResult;
+import ru.georgeee.itmo.sem6.dkvs.msg.Message;
+import ru.georgeee.itmo.sem6.dkvs.msg.MessageParsingException;
+import ru.georgeee.itmo.sem6.dkvs.msg.OpResult;
 
 import java.util.ArrayList;
 import java.util.List;

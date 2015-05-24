@@ -15,17 +15,15 @@ public class SystemConfiguration {
     private final static Logger log = LoggerFactory.getLogger(SystemConfiguration.class);
     private static final String NODE_PREFIX = "node.";
     private static final String ROLES_PREFIX = "roles.";
-    private static final String TIMEOUT_KEY = "timeout";
+    private static final String SOCKET_TIMEOUT_KEY = "socket.timeout";
+    private static final String MESSAGE_RETRY_KEY = "message.retry";
 
     @Getter
     private final Map<String, NodeConfiguration> nodes;
     @Getter
-    private final long timeout;
-
-    public SystemConfiguration(Map<String, NodeConfiguration> nodes, long timeout) {
-        this.nodes = nodes;
-        this.timeout = timeout;
-    }
+    private final int socketTimeout;
+    @Getter
+    private final int messageRetry;
 
     public SystemConfiguration(File propertiesFile) throws ConfigurationException {
         this(new PropertiesConfiguration(propertiesFile));
@@ -42,7 +40,8 @@ public class SystemConfiguration {
                 nodes.put(id, node);
             }
         }
-        timeout = configuration.getLong(TIMEOUT_KEY);
+        socketTimeout = configuration.getInt(SOCKET_TIMEOUT_KEY);
+        messageRetry = configuration.getInt(MESSAGE_RETRY_KEY);
     }
 
     private NodeConfiguration getNode(Configuration configuration, String id) {

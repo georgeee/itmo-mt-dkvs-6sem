@@ -1,25 +1,25 @@
-package ru.georgeee.itmo.sem6.dkvs.connectivity.msg.data;
+package ru.georgeee.itmo.sem6.dkvs.msg.data;
 
 import lombok.Getter;
-import ru.georgeee.itmo.sem6.dkvs.connectivity.msg.Command;
-import ru.georgeee.itmo.sem6.dkvs.connectivity.msg.Message;
-import ru.georgeee.itmo.sem6.dkvs.connectivity.msg.MessageParsingException;
+import ru.georgeee.itmo.sem6.dkvs.msg.Command;
+import ru.georgeee.itmo.sem6.dkvs.msg.Message;
+import ru.georgeee.itmo.sem6.dkvs.msg.MessageParsingException;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProposeMessageData extends AbstractMessageData {
+public class DecisionMessageData extends AbstractMessageData {
     @Getter
     private final int slotId;
     @Getter
     private final Command command;
 
-    public ProposeMessageData(int slotId, Command command) {
+    public DecisionMessageData(int slotId, Command command) {
         this.slotId = slotId;
         this.command = command;
     }
 
-    public ProposeMessageData(Message parent) throws MessageParsingException {
+    public DecisionMessageData(Message parent) throws MessageParsingException {
         try {
             this.slotId = Integer.parseInt(parent.getArgs()[0]);
             this.command = Command.parseFromArgs(parent.getArgs(), 1);
@@ -30,7 +30,7 @@ public class ProposeMessageData extends AbstractMessageData {
 
     @Override
     protected Message.Type getType() {
-        return Message.Type.PROPOSE;
+        return Message.Type.DECISION;
     }
 
     @Override
@@ -40,5 +40,4 @@ public class ProposeMessageData extends AbstractMessageData {
         appendToArgs(args, command);
         return args;
     }
-
 }

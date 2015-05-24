@@ -6,7 +6,8 @@ import org.slf4j.LoggerFactory;
 import ru.georgeee.itmo.sem6.dkvs.Consumer;
 import ru.georgeee.itmo.sem6.dkvs.Destination;
 import ru.georgeee.itmo.sem6.dkvs.config.SystemConfiguration;
-import ru.georgeee.itmo.sem6.dkvs.connectivity.msg.Message;
+import ru.georgeee.itmo.sem6.dkvs.msg.DestinatedMessage;
+import ru.georgeee.itmo.sem6.dkvs.msg.Message;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,7 +15,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-class ConnectionManager  {
+class ConnectionManager {
     private static final Logger log = LoggerFactory.getLogger(ConnectionManager.class);
     private final ExecutorService sendExecutor;
     @Getter
@@ -34,31 +35,34 @@ class ConnectionManager  {
         this.connections = new ConcurrentHashMap<>();
     }
 
-    public void send(final Destination destination, final Message message) {
-        sendExecutor.submit(new SendTask(destination, message));
+    public void send(final DestinatedMessage message) {
+        message.incCounter();
+        if (message.getCounter() > systemConfiguration.getMessageRetry()) {
+            log.warn("Retry count exceed for message {}", message);
+        } else {
+            sendExecutor.submit(new SendTask(message));
+        }
     }
 
     private final class SendTask implements Runnable {
-        private final Destination destination;
-        private final Message message;
+        private final DestinatedMessage message;
 
-        private SendTask(Destination destination, Message message) {
-            this.destination = destination;
+        private SendTask(DestinatedMessage message) {
             this.message = message;
         }
 
         @Override
         public void run() {
-            ConnectionHandler connectionHandler = connections.get(destination);
+            ConnectionHandler connectionHandler = connections.get(message.getDestination());
             if (connectionHandler == null) {
                 try {
-                    connectionHandler = ConnectionHandler.acquireConnection(ConnectionManager.this, destination);
+                    connectionHandler = ConnectionHandler.acquireConnection(ConnectionManager.this, message.getDestination());
                 } catch (IOException | IllegalArgumentException e) {
                     log.error("Error to acquire a connection", e);
                 }
                 if (connectionHandler == null) {
-                    log.error("Error to connect to node {}", destination);
-                    log.error("Can't send a message (can't acquire a connection to {}): {}", destination, message);
+                    log.error("Error to connect to node {}", message.getDestination());
+                    log.error("Can't send a message (can't acquire a connection to {}): {}", message.getDestination(), message);
                 } else {
                     connectionHandler.send(message);
                 }

@@ -1,7 +1,7 @@
-package ru.georgeee.itmo.sem6.dkvs.connectivity.msg.data;
+package ru.georgeee.itmo.sem6.dkvs.msg.data;
 
-import ru.georgeee.itmo.sem6.dkvs.connectivity.msg.ArgsAppendable;
-import ru.georgeee.itmo.sem6.dkvs.connectivity.msg.Message;
+import ru.georgeee.itmo.sem6.dkvs.msg.ArgsAppendable;
+import ru.georgeee.itmo.sem6.dkvs.msg.Message;
 
 import java.util.List;
 

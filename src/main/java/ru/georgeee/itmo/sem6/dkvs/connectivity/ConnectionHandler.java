@@ -4,11 +4,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.georgeee.itmo.sem6.dkvs.Destination;
 import ru.georgeee.itmo.sem6.dkvs.config.NodeConfiguration;
-import ru.georgeee.itmo.sem6.dkvs.connectivity.msg.Message;
-import ru.georgeee.itmo.sem6.dkvs.connectivity.msg.MessageParsingException;
+import ru.georgeee.itmo.sem6.dkvs.msg.DestinatedMessage;
+import ru.georgeee.itmo.sem6.dkvs.msg.Message;
+import ru.georgeee.itmo.sem6.dkvs.msg.MessageParsingException;
 
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -37,7 +39,12 @@ class ConnectionHandler implements Runnable {
         this.writer = writer;
         this.destination = destination;
         this.sendExecutor = Executors.newSingleThreadExecutor();
+        configureTimeOut();
         registerConnection();
+    }
+
+    private void configureTimeOut() throws SocketException {
+        socket.setSoTimeout(connectionManager.getSystemConfiguration().getSocketTimeout());
     }
 
     private static BufferedWriter createWriter(Socket socket) throws IOException {
@@ -104,21 +111,21 @@ class ConnectionHandler implements Runnable {
         close();
     }
 
-    public void send(final Message message) {
+    public void send(final DestinatedMessage message) {
         sendExecutor.submit(new Runnable() {
             @Override
             public void run() {
                 if (closed) {
                     //resend
-                    connectionManager.send(destination, message);
+                    connectionManager.send(message);
                 } else {
                     try {
-                        writer.write(message.toString());
+                        writer.write(message.getMessage().toString());
                         writer.newLine();
                         writer.flush();
                     } catch (IOException e) {
                         log.error("Error sending message, " + message, e);
-                        connectionManager.send(destination, message);
+                        connectionManager.send(message);
                     }
                 }
             }
@@ -151,7 +158,8 @@ class ConnectionHandler implements Runnable {
         if (destConfiguration == null) {
             throw new IllegalArgumentException("Unknown destination node: " + destination.getId());
         }
-        Socket socket = new Socket(destConfiguration.getAddress(), destConfiguration.getPort());
+        Socket socket = new Socket();
+        socket.connect(destConfiguration.getInetSocketAddress(), connectionManager.getSystemConfiguration().getSocketTimeout());
         BufferedReader reader = null;
         BufferedWriter writer = null;
         try {

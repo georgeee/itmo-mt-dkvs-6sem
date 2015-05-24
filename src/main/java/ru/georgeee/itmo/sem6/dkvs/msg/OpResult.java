@@ -1,11 +1,11 @@
-package ru.georgeee.itmo.sem6.dkvs.connectivity.msg;
+package ru.georgeee.itmo.sem6.dkvs.msg;
 
 import lombok.Getter;
 
 import java.util.Arrays;
 import java.util.List;
 
-public class Op implements ArgsAppendable {
+public class OpResult implements ArgsAppendable {
     @Getter
     private final Type type;
     @Getter
@@ -13,44 +13,38 @@ public class Op implements ArgsAppendable {
     @Getter
     private final String value;
 
-    private Op(Type type, String key, String value) {
+    private OpResult(Type type, String key, String value) {
         this.type = type;
         this.key = key;
         this.value = value;
-
     }
 
-    public static Op createGetOperation(String key) {
-        return new Op(Type.GET, key, null);
+    public static OpResult createValueResult(String key, String value) {
+        return new OpResult(Type.VALUE, key, value);
     }
 
-    public static Op createSetOperation(String key, String value) {
-        return new Op(Type.SET, key, value);
+    public static OpResult createNotFoundResult() {
+        return new OpResult(Type.NOT_FOUND, null, null);
     }
 
-    public static Op createDeleteOperation(String key) {
-        return new Op(Type.DELETE, key, null);
+    public static OpResult createdStoredResult() {
+        return new OpResult(Type.STORED, null, null);
     }
 
-    public static Op createPingOperation() {
-        return new Op(Type.PING, null, null);
+    public static OpResult createDeletedResult() {
+        return new OpResult(Type.DELETED, null, null);
     }
 
-    public static Op parseFromArgs(String[] args, int i) throws MessageParsingException {
+    public static OpResult parseFromArgs(String[] args, int i) throws MessageParsingException {
         try {
-            Type type = Type.valueOf(args[i]);
+            Type type = Type.valueOf(args[i].toUpperCase());
             String key = null, value = null;
             switch (type) {
-                case DELETE:
-                case GET:
-                case SET:
+                case VALUE:
                     key = args[i + 1];
-            }
-            switch (type) {
-                case SET:
                     value = args[i + 2];
             }
-            return new Op(type, key, value);
+            return new OpResult(type, key, value);
         } catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
             throw new MessageParsingException("Error parsing from args: " + Arrays.toString(args), e);
         }
@@ -68,6 +62,6 @@ public class Op implements ArgsAppendable {
     }
 
     public enum Type {
-        GET, SET, DELETE, PING
+        VALUE, NOT_FOUND, STORED, DELETED
     }
 }

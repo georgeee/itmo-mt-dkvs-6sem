@@ -1,6 +1,6 @@
 package ru.georgeee.itmo.sem6.dkvs.connectivity;
 
-import ru.georgeee.itmo.sem6.dkvs.connectivity.msg.Message;
+import ru.georgeee.itmo.sem6.dkvs.msg.Message;
 
 class Replica extends AbstractInstance {
 

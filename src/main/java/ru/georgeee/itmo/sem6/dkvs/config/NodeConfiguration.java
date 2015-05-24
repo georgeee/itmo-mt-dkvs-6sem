@@ -3,6 +3,7 @@ package ru.georgeee.itmo.sem6.dkvs.config;
 import lombok.Getter;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.Set;
 
@@ -23,7 +24,10 @@ public class NodeConfiguration {
         this.roles = roles;
     }
 
-    public InetAddress getAddress() throws UnknownHostException {
+    public InetAddress getInetAddress() throws UnknownHostException {
         return InetAddress.getByName(getHost());
+    }
+    public InetSocketAddress getInetSocketAddress() throws UnknownHostException {
+        return new InetSocketAddress(getInetAddress(), getPort());
     }
 }
