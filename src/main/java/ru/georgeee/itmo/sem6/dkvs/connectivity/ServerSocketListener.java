@@ -29,6 +29,7 @@ class ServerSocketListener extends Thread {
             return;
         }
         while (true) {
+            //@TODO add interrupt checks
             Socket connectionSocket = null;
             try {
                 connectionSocket = serverSocket.accept();
@@ -37,6 +38,7 @@ class ServerSocketListener extends Thread {
             }
             if (connectionSocket != null) {
                 try {
+                    //@TODO rewrite: handleConnection reads, i.e. blocks
                     executorService.submit(ConnectionHandler.handleConnection(parent.getConnectionManager(), connectionSocket));
                 } catch (IOException e) {
                     try {

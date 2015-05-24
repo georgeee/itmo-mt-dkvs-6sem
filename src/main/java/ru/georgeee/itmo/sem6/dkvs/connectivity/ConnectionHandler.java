@@ -40,6 +40,7 @@ class ConnectionHandler implements Runnable {
         this.destination = destination;
         this.sendExecutor = Executors.newSingleThreadExecutor();
         configureTimeOut();
+        //@TODO remove from constructor
         registerConnection();
     }
 
