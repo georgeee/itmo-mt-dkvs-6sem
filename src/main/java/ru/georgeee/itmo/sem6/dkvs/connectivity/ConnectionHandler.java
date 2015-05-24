@@ -112,24 +112,19 @@ class ConnectionHandler implements Runnable {
     }
 
     public void send(final DestinatedMessage message) {
-        sendExecutor.submit(new Runnable() {
-            @Override
-            public void run() {
-                if (closed) {
-                    //resend
-                    connectionManager.send(message);
-                } else {
-                    try {
-                        writer.write(message.getMessage().toString());
-                        writer.newLine();
-                        writer.flush();
-                    } catch (IOException e) {
-                        log.error("Error sending message, " + message, e);
-                        connectionManager.send(message);
-                    }
-                }
+        if (closed) {
+            //resend
+            connectionManager.send(message);
+        } else {
+            try {
+                writer.write(message.getMessage().toString());
+                writer.newLine();
+                writer.flush();
+            } catch (IOException e) {
+                log.error("Error sending message, " + message, e);
+                connectionManager.send(message);
             }
-        });
+        }
     }
 
     private synchronized void close() {
