@@ -59,14 +59,19 @@ class Replica extends AbstractInstance {
     }
 
     private void propose() {
-        while (slotIn < slotOut + slotWindow && !commandQueue.isEmpty()) {
+        while ((slotWindow <= 0 || slotIn < slotOut + slotWindow) && !commandQueue.isEmpty()) {
             if (decisions.get(slotIn) == null) {
-                Command command = commandQueue.poll();
+                final Command command = commandQueue.poll();
                 proposals.set(slotIn, command);
                 setState(command, CommandState.PROPOSED);
-                for (Destination leader : leaders) {
-                    send(new ProposeMessageData(slotIn, command).createMessage(), leader);
-                }
+                executeRepeating(new IsDecidedPredicate(slotIn), new Runnable() {
+                    @Override
+                    public void run() {
+                        for (Destination leader : leaders) {
+                            send(new ProposeMessageData(slotIn, command).createMessage(), leader);
+                        }
+                    }
+                });
             }
             ++slotIn;
             enlargeSlotSets(slotIn);
@@ -95,6 +100,8 @@ class Replica extends AbstractInstance {
                 case DECISION:
                     process(message.getDecisionData());
                     break;
+                default:
+                    throw new IllegalArgumentException("Unknown message type " + message.getType());
             }
             propose();
         } catch (MessageParsingException e) {
@@ -112,6 +119,7 @@ class Replica extends AbstractInstance {
                 sendResponseToClient(command, executeCommand(command));
             } else {
                 commandQueue.add(command);
+                setState(command, CommandState.REQUESTED);
             }
         } else {
             switch (commandState) {
@@ -142,6 +150,7 @@ class Replica extends AbstractInstance {
             proposals.set(slotOut, null);
             if (proposal != null && !decision.equals(proposal)) {
                 commandQueue.add(proposal);
+                setState(command, CommandState.REQUESTED);
             }
             performSlotOutDecision();
         }
@@ -177,6 +186,19 @@ class Replica extends AbstractInstance {
 
     private OpResult getResult(Command command) {
         return commandResults.get(command);
+    }
+
+    private class IsDecidedPredicate implements Predicate {
+        private final int slotId;
+
+        private IsDecidedPredicate(int slotId) {
+            this.slotId = slotId;
+        }
+
+        @Override
+        public boolean evaluate() {
+            return decisions.get(slotId) != null;
+        }
     }
 
     private enum CommandState {

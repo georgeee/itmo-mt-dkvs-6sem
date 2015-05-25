@@ -20,7 +20,9 @@ public class SystemConfiguration {
     private static final String MESSAGE_RETRY_KEY = "message.retry";
     private static final String MESSAGE_RETRY_TIMEOUT_KEY = "message.retry.timeout";
     private static final String PAXOS_SLOT_WIDOW_KEY = "paxos.slot.window";
-    private static final String SENDER_POOL_SIZE_KEY = "sender.pool.size";
+    private static final String SENDER_POOL_SIZE_KEY = "sender.poolSize";
+    private static final String INSTANCE_REPEAT_POOL_SIZE_KEY = "instance.repeat.poolSize";
+    private static final String INSTANCE_REPEAT_TIMEOUT_KEY = "instance.repeat.timeout";
 
     @Getter
     private final Map<String, NodeConfiguration> nodes;
@@ -34,6 +36,10 @@ public class SystemConfiguration {
     private final int paxosSlotWindow;
     @Getter
     private final int senderPoolSize;
+    @Getter
+    private final int instanceRepeatTimeout;
+    @Getter
+    private final int instanceRepeatPoolSize;
 
     public SystemConfiguration(File propertiesFile) throws ConfigurationException {
         this(new PropertiesConfiguration(propertiesFile));
@@ -55,6 +61,8 @@ public class SystemConfiguration {
         messageRetryTimeout = configuration.getInt(MESSAGE_RETRY_TIMEOUT_KEY);
         paxosSlotWindow = configuration.getInt(PAXOS_SLOT_WIDOW_KEY);
         senderPoolSize = configuration.getInt(SENDER_POOL_SIZE_KEY);
+        instanceRepeatPoolSize = configuration.getInt(INSTANCE_REPEAT_POOL_SIZE_KEY);
+        instanceRepeatTimeout = configuration.getInt(INSTANCE_REPEAT_TIMEOUT_KEY);
     }
 
     private NodeConfiguration getNode(Configuration configuration, String id) {
@@ -115,4 +123,5 @@ public class SystemConfiguration {
         }
         return destinations;
     }
+
 }
