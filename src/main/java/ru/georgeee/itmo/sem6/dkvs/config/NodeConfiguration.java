@@ -27,6 +27,7 @@ public class NodeConfiguration {
     public InetAddress getInetAddress() throws UnknownHostException {
         return InetAddress.getByName(getHost());
     }
+
     public InetSocketAddress getInetSocketAddress() throws UnknownHostException {
         return new InetSocketAddress(getInetAddress(), getPort());
     }

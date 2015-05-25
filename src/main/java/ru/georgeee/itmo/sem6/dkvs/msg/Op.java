@@ -24,6 +24,10 @@ public class Op implements ArgsAppendable {
         return new Op(Type.GET, key, null);
     }
 
+    public static Op createGetConsistentOperation(String key) {
+        return new Op(Type.GET_CONSISTENT, key, null);
+    }
+
     public static Op createSetOperation(String key, String value) {
         return new Op(Type.SET, key, value);
     }
@@ -40,6 +44,7 @@ public class Op implements ArgsAppendable {
             switch (type) {
                 case DELETE:
                 case GET:
+                case GET_CONSISTENT:
                 case SET:
                     key = args[i + 1];
             }
@@ -54,6 +59,15 @@ public class Op implements ArgsAppendable {
     }
 
     @Override
+    public String toString() {
+        return "Op{" +
+                "type=" + type +
+                ", key='" + key + '\'' +
+                ", value='" + value + '\'' +
+                '}';
+    }
+
+    @Override
     public void appendToArgs(List<String> args) {
         args.add(type.toString());
         if (key != null) {
@@ -65,6 +79,6 @@ public class Op implements ArgsAppendable {
     }
 
     public enum Type {
-        GET, SET, DELETE
+        GET, SET, DELETE, GET_CONSISTENT
     }
 }

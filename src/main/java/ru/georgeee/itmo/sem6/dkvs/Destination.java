@@ -9,7 +9,7 @@ public class Destination {
     private final String id;
 
     public Destination(Type type, String id) {
-        if(type == null || id == null){
+        if (type == null || id == null) {
             throw new IllegalArgumentException("Neither type nor id can be null for destination");
         }
         this.type = type;
@@ -43,7 +43,7 @@ public class Destination {
                 '}';
     }
 
-    public enum Type{
+    public enum Type {
         CLIENT, NODE
     }
 }

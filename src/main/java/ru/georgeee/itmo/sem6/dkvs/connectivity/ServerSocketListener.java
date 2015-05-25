@@ -6,48 +6,53 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-class ServerSocketListener extends Thread {
+class ServerSocketListener implements Runnable {
     private final static Logger log = LoggerFactory.getLogger(ServerSocketListener.class);
 
-    private final ExecutorService executorService = Executors.newCachedThreadPool();
-    private final Node parent;
+    private final Node node;
 
-    ServerSocketListener(Node parent) {
-        this.parent = parent;
+    ServerSocketListener(Node node) {
+        this.node = node;
     }
 
     @Override
     public void run() {
         ServerSocket serverSocket;
         try {
-            serverSocket = new ServerSocket(parent.getNodeConfiguration().getPort());
+            serverSocket = new ServerSocket(node.getNodeConfiguration().getPort());
         } catch (IOException e) {
-            log.error("Error opening socket on port " + parent.getNodeConfiguration().getPort(), e);
+            log.error("Error opening socket on port " + node.getNodeConfiguration().getPort(), e);
             return;
         }
         while (true) {
-            //@TODO add interrupt checks
+            if (Thread.interrupted()) {
+                Thread.currentThread().interrupt();
+                break;
+            }
             Socket connectionSocket = null;
             try {
                 connectionSocket = serverSocket.accept();
             } catch (IOException e) {
-                log.error("Error while listening port " + parent.getNodeConfiguration().getPort(), e);
+                log.error("Error while listening port " + node.getNodeConfiguration().getPort(), e);
             }
             if (connectionSocket != null) {
-                try {
-                    //@TODO rewrite: handleConnection reads, i.e. blocks
-                    executorService.submit(ConnectionHandler.handleConnection(parent.getConnectionManager(), connectionSocket));
-                } catch (IOException e) {
-                    try {
-                        connectionSocket.close();
-                    } catch (IOException e1) {
-                        log.error("Error while closing connection", e);
+                final Socket finalConnectionSocket = connectionSocket;
+                node.getConnectionManager().getReceiveListenersService().submit(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            ConnectionHandler.handleConnection(node.getConnectionManager(), finalConnectionSocket).run();
+                        } catch (IOException e) {
+                            try {
+                                finalConnectionSocket.close();
+                            } catch (IOException e1) {
+                                log.error("Error while closing connection", e);
+                            }
+                            log.error("Error initializing connection", e);
+                        }
                     }
-                    log.error("Error initializing connection", e);
-                }
+                });
             }
         }
     }

@@ -31,8 +31,8 @@ public class OpResult implements ArgsAppendable {
         return new OpResult(Type.STORED, null, null);
     }
 
-    public static OpResult createDeletedResult() {
-        return new OpResult(Type.DELETED, null, null);
+    public static OpResult createDeletedResult(String key, String value) {
+        return new OpResult(Type.DELETED, key, value);
     }
 
     public static OpResult parseFromArgs(String[] args, int i) throws MessageParsingException {
@@ -41,6 +41,7 @@ public class OpResult implements ArgsAppendable {
             String key = null, value = null;
             switch (type) {
                 case VALUE:
+                case DELETED:
                     key = args[i + 1];
                     value = args[i + 2];
             }

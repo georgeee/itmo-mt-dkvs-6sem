@@ -17,7 +17,7 @@ abstract class AbstractInstance implements Consumer<Message>, Runnable {
     }
 
     protected BlockingQueue<Message> createQueue() {
-        return new ArrayBlockingQueue<Message>(QUEUE_CAPACITY);
+        return new ArrayBlockingQueue<>(QUEUE_CAPACITY);
     }
 
 
@@ -44,5 +44,8 @@ abstract class AbstractInstance implements Consumer<Message>, Runnable {
                 break;
             }
         }
+    }
+    interface Predicate {
+        boolean evaluate();
     }
 }

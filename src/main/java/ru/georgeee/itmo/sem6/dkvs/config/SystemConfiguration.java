@@ -7,6 +7,7 @@ import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.georgeee.itmo.sem6.dkvs.Destination;
 
 import java.io.File;
 import java.util.*;
@@ -17,6 +18,9 @@ public class SystemConfiguration {
     private static final String ROLES_PREFIX = "roles.";
     private static final String SOCKET_TIMEOUT_KEY = "socket.timeout";
     private static final String MESSAGE_RETRY_KEY = "message.retry";
+    private static final String MESSAGE_RETRY_TIMEOUT_KEY = "message.retry.timeout";
+    private static final String PAXOS_SLOT_WIDOW_KEY = "paxos.slot.window";
+    private static final String SENDER_POOL_SIZE_KEY = "sender.pool.size";
 
     @Getter
     private final Map<String, NodeConfiguration> nodes;
@@ -24,6 +28,12 @@ public class SystemConfiguration {
     private final int socketTimeout;
     @Getter
     private final int messageRetry;
+    @Getter
+    private final int messageRetryTimeout;
+    @Getter
+    private final int paxosSlotWindow;
+    @Getter
+    private final int senderPoolSize;
 
     public SystemConfiguration(File propertiesFile) throws ConfigurationException {
         this(new PropertiesConfiguration(propertiesFile));
@@ -42,6 +52,9 @@ public class SystemConfiguration {
         }
         socketTimeout = configuration.getInt(SOCKET_TIMEOUT_KEY);
         messageRetry = configuration.getInt(MESSAGE_RETRY_KEY);
+        messageRetryTimeout = configuration.getInt(MESSAGE_RETRY_TIMEOUT_KEY);
+        paxosSlotWindow = configuration.getInt(PAXOS_SLOT_WIDOW_KEY);
+        senderPoolSize = configuration.getInt(SENDER_POOL_SIZE_KEY);
     }
 
     private NodeConfiguration getNode(Configuration configuration, String id) {
@@ -84,12 +97,22 @@ public class SystemConfiguration {
                     break;
                 }
             }
-            if (selectedRole == null) {
-                return null;
-            } else {
+            if (selectedRole != null) {
                 roles.add(selectedRole);
+            } else {
+                return null;
             }
         }
         return EnumSet.copyOf(roles);
+    }
+
+    public List<Destination> getDestinations(Role role) {
+        List<Destination> destinations = new ArrayList<>();
+        for (NodeConfiguration node : nodes.values()) {
+            if (node.getRoles().contains(role)) {
+                destinations.add(new Destination(Destination.Type.NODE, node.getId()));
+            }
+        }
+        return destinations;
     }
 }

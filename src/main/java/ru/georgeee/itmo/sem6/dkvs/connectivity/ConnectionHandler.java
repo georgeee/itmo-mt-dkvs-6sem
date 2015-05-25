@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.georgeee.itmo.sem6.dkvs.Destination;
 import ru.georgeee.itmo.sem6.dkvs.config.NodeConfiguration;
-import ru.georgeee.itmo.sem6.dkvs.msg.DestinatedMessage;
 import ru.georgeee.itmo.sem6.dkvs.msg.Message;
 import ru.georgeee.itmo.sem6.dkvs.msg.MessageParsingException;
 
@@ -12,8 +11,6 @@ import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -23,29 +20,19 @@ class ConnectionHandler implements Runnable {
     private static final int IDENTITY_STRING_PATTERN_CLIENT_GROUP = 0;
     private static final int IDENTITY_STRING_PATTERN_NODE_GROUP = 1;
     private static final int IDENTITY_STRING_PATTERN_VALUE_GROUP = 2;
-    private final ConnectionManager connectionManager;
-    private final ExecutorService sendExecutor;
     private final Socket socket;
     private final BufferedReader reader;
     private final Destination destination;
     private final BufferedWriter writer;
     private volatile boolean closed;
+    private volatile ConnectionManager connectionManager;
 
 
-    private ConnectionHandler(ConnectionManager connectionManager, Socket socket, BufferedReader reader, BufferedWriter writer, Destination destination) throws IOException {
-        this.connectionManager = connectionManager;
+    private ConnectionHandler(Socket socket, BufferedReader reader, BufferedWriter writer, Destination destination) throws IOException {
         this.socket = socket;
         this.reader = reader;
         this.writer = writer;
         this.destination = destination;
-        this.sendExecutor = Executors.newSingleThreadExecutor();
-        configureTimeOut();
-        //@TODO remove from constructor
-        registerConnection();
-    }
-
-    private void configureTimeOut() throws SocketException {
-        socket.setSoTimeout(connectionManager.getSystemConfiguration().getSocketTimeout());
     }
 
     private static BufferedWriter createWriter(Socket socket) throws IOException {
@@ -54,13 +41,6 @@ class ConnectionHandler implements Runnable {
 
     private static BufferedReader createReader(Socket socket) throws IOException {
         return new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
-    }
-
-    private void registerConnection() {
-        ConnectionHandler previous = connectionManager.getConnections().put(destination, this);
-        if (previous != null) {
-            previous.close();
-        }
     }
 
     private static Destination readIdentity(BufferedReader reader) throws IOException {
@@ -81,10 +61,69 @@ class ConnectionHandler implements Runnable {
     }
 
     public static ConnectionHandler handleConnection(ConnectionManager connectionManager, Socket socket) throws IOException {
+        socket.setSoTimeout(connectionManager.getSystemConfiguration().getSocketTimeout());
         BufferedReader reader = createReader(socket);
         BufferedWriter writer = createWriter(socket);
         Destination destination = readIdentity(reader);
-        return new ConnectionHandler(connectionManager, socket, reader, writer, destination);
+        ConnectionHandler connectionHandler = new ConnectionHandler(socket, reader, writer, destination);
+        connectionHandler.register(connectionManager);
+        return connectionHandler;
+    }
+
+    /**
+     * @throws java.lang.IllegalArgumentException if destination isn't node or id is unknown by system configuration
+     */
+    public static ConnectionHandler acquireConnection(ConnectionManager connectionManager, Destination destination) throws IOException {
+        if (destination.getType() != Destination.Type.NODE) {
+            throw new IllegalArgumentException("Can't acquire connection to client");
+        }
+        NodeConfiguration destConfiguration = connectionManager.getSystemConfiguration().getNodes().get(destination.getId());
+        if (destConfiguration == null) {
+            throw new IllegalArgumentException("Unknown destination node: " + destination.getId());
+        }
+        Socket socket = new Socket();
+        socket.connect(destConfiguration.getInetSocketAddress(), connectionManager.getSystemConfiguration().getSocketTimeout());
+        socket.setSoTimeout(connectionManager.getSystemConfiguration().getSocketTimeout());
+        BufferedReader reader = null;
+        BufferedWriter writer = null;
+        try {
+            reader = createReader(socket);
+            writer = createWriter(socket);
+            writeIdentity(writer, connectionManager.getSelfDestination());
+        } catch (IOException | RuntimeException e) {
+            try {
+                if (reader != null) {
+                    reader.close();
+                }
+                if (writer != null) {
+                    writer.close();
+                }
+                socket.close();
+            } catch (IOException e2) {
+                log.warn("Error while closing connection", e2);
+            }
+            throw e;
+        }
+        ConnectionHandler connectionHandler = new ConnectionHandler(socket, reader, writer, destination);
+        connectionHandler.register(connectionManager);
+        return connectionHandler;
+    }
+
+    private static void writeIdentity(BufferedWriter writer, Destination selfDestination) throws IOException {
+        writer.write(selfDestination.getType().name() + " " + selfDestination.getId());
+        writer.newLine();
+        writer.flush();
+    }
+
+    private void register(ConnectionManager connectionManager) throws SocketException {
+        if (this.connectionManager != null) {
+            throw new IllegalStateException("Already registered");
+        }
+        this.connectionManager = connectionManager;
+        ConnectionHandler previous = connectionManager.getConnections().put(destination, this);
+        if (previous != null) {
+            previous.close();
+        }
     }
 
     @Override
@@ -107,25 +146,23 @@ class ConnectionHandler implements Runnable {
                 }
             }
         } catch (IOException e) {
-            log.error("I/O exception caught", e);
+            log.debug("I/O exception caught", e);
         }
         close();
     }
 
-    public void send(final DestinatedMessage message) {
-        if (closed) {
-            //resend
-            connectionManager.send(message);
-        } else {
+    public boolean trySend(final Message message) {
+        if (!closed) {
             try {
-                writer.write(message.getMessage().toString());
+                writer.write(message.toString());
                 writer.newLine();
                 writer.flush();
+                return true;
             } catch (IOException e) {
-                log.error("Error sending message, " + message, e);
-                connectionManager.send(message);
+                log.debug("Error sending message, " + message, e);
             }
         }
+        return false;
     }
 
     private synchronized void close() {
@@ -137,51 +174,9 @@ class ConnectionHandler implements Runnable {
                 writer.close();
                 socket.close();
             } catch (IOException e) {
-                log.error("Error while closing connection", e);
+                log.warn("Error while closing connection", e);
             }
             connectionManager.getConnections().remove(destination, this);
         }
-    }
-
-    /**
-     * @throws java.lang.IllegalArgumentException if destination isn't node or id is unknown by system configuration
-     */
-    public static ConnectionHandler acquireConnection(ConnectionManager connectionManager, Destination destination) throws IOException {
-        if (destination.getType() != Destination.Type.NODE) {
-            throw new IllegalArgumentException("Can't acquire connection to client");
-        }
-        NodeConfiguration destConfiguration = connectionManager.getSystemConfiguration().getNodes().get(destination.getId());
-        if (destConfiguration == null) {
-            throw new IllegalArgumentException("Unknown destination node: " + destination.getId());
-        }
-        Socket socket = new Socket();
-        socket.connect(destConfiguration.getInetSocketAddress(), connectionManager.getSystemConfiguration().getSocketTimeout());
-        BufferedReader reader = null;
-        BufferedWriter writer = null;
-        try {
-            reader = createReader(socket);
-            writer = createWriter(socket);
-            writeIdentity(writer, connectionManager.getSelfDestination());
-        } catch (IOException | RuntimeException e) {
-            try {
-                if (reader != null) {
-                    reader.close();
-                }
-                if (writer != null) {
-                    writer.close();
-                }
-                socket.close();
-            } catch (IOException e2) {
-                log.error("Error while closing connection", e2);
-            }
-            throw e;
-        }
-        return new ConnectionHandler(connectionManager, socket, reader, writer, destination);
-    }
-
-    private static void writeIdentity(BufferedWriter writer, Destination selfDestination) throws IOException {
-        writer.write(selfDestination.getType().name() + " " + selfDestination.getId());
-        writer.newLine();
-        writer.flush();
     }
 }

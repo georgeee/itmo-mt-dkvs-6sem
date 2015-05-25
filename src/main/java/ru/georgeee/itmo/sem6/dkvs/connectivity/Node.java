@@ -27,6 +27,7 @@ public class Node {
     private final Leader leader;
     private final Replica replica;
     private final List<Thread> threads;
+    private ServerSocketListener serverSocketListener;
 
     public Node(SystemConfiguration systemConfiguration, NodeConfiguration nodeConfiguration) {
         this.nodeConfiguration = nodeConfiguration;
@@ -60,6 +61,7 @@ public class Node {
 
     public void start() {
         synchronized (threads) {
+            serverSocketListener = new ServerSocketListener(this);
             if (!threads.isEmpty()) {
                 throw new IllegalStateException("Already started");
             }
@@ -72,7 +74,7 @@ public class Node {
             if (leader != null) {
                 threads.add(new Thread(leader));
             }
-            threads.add(new ServerSocketListener(this));
+            threads.add(new Thread(serverSocketListener));
             for (Thread thread : threads) {
                 thread.start();
             }
@@ -92,10 +94,10 @@ public class Node {
         @Override
         public void consume(Message message) {
             Consumer<Message> consumer = consumers.get(message.getType());
-            if (consumer == null) {
-                log.error("No consumer registered for type {} (message: {})", message.getType(), message);
-            } else {
+            if (consumer != null) {
                 consumer.consume(message);
+            } else {
+                log.error("No consumer registered for type {} (message: {})", message.getType(), message);
             }
         }
     }

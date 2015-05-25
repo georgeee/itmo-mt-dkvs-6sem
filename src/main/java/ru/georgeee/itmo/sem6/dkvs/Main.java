@@ -1,8 +1,8 @@
 package ru.georgeee.itmo.sem6.dkvs;
 
 import org.apache.commons.configuration.ConfigurationException;
-import ru.georgeee.itmo.sem6.dkvs.config.SystemConfiguration;
 import ru.georgeee.itmo.sem6.dkvs.config.NodeConfiguration;
+import ru.georgeee.itmo.sem6.dkvs.config.SystemConfiguration;
 import ru.georgeee.itmo.sem6.dkvs.connectivity.Node;
 
 import java.io.File;
