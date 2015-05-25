@@ -1,10 +1,7 @@
 package ru.georgeee.itmo.sem6.dkvs.msg;
 
 import lombok.Getter;
-import ru.georgeee.itmo.sem6.dkvs.msg.data.DecisionMessageData;
-import ru.georgeee.itmo.sem6.dkvs.msg.data.ProposeMessageData;
-import ru.georgeee.itmo.sem6.dkvs.msg.data.RequestMessageData;
-import ru.georgeee.itmo.sem6.dkvs.msg.data.ResponseMessageData;
+import ru.georgeee.itmo.sem6.dkvs.msg.data.*;
 
 public class Message {
 
@@ -48,6 +45,30 @@ public class Message {
 
     public ResponseMessageData getResponseData() throws MessageParsingException {
         return new ResponseMessageData(this);
+    }
+
+    public P1aMessageData getP1aData() throws MessageParsingException {
+        return new P1aMessageData(this);
+    }
+
+    public AdoptedMessageData getAdoptedData() throws MessageParsingException {
+        return new AdoptedMessageData(this);
+    }
+
+    public PreemptedMessageData getPreemptedData() throws MessageParsingException {
+        return new PreemptedMessageData(this);
+    }
+
+    public P2bMessageData getP2bData() throws MessageParsingException {
+        return new P2bMessageData(this);
+    }
+
+    public P1bMessageData getP1bData() throws MessageParsingException {
+        return new P1bMessageData(this);
+    }
+
+    public P2aMessageData getP2aData() throws MessageParsingException {
+        return new P2aMessageData(this);
     }
 
     public String toString() {

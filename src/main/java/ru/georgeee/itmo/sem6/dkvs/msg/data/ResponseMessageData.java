@@ -23,7 +23,7 @@ public class ResponseMessageData extends AbstractMessageData {
         try {
             this.commandId = Integer.parseInt(parent.getArgs()[0]);
             this.opResult = OpResult.parseFromArgs(parent.getArgs(), 1);
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
             throw new MessageParsingException(parent.getArgs());
         }
     }

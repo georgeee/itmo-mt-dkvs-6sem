@@ -22,8 +22,8 @@ public class DecisionMessageData extends AbstractMessageData {
     public DecisionMessageData(Message parent) throws MessageParsingException {
         try {
             this.slotId = Integer.parseInt(parent.getArgs()[0]);
-            this.command = Command.parseFromArgs(parent.getArgs(), 1);
-        } catch (NumberFormatException e) {
+            this.command = Command.parseFromArgs(parent.getArgs(), 1).getLeft();
+        } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
             throw new MessageParsingException(parent.getArgs());
         }
     }

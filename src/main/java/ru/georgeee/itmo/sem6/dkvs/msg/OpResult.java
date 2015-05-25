@@ -37,13 +37,13 @@ public class OpResult implements ArgsAppendable {
 
     public static OpResult parseFromArgs(String[] args, int i) throws MessageParsingException {
         try {
-            Type type = Type.valueOf(args[i].toUpperCase());
+            Type type = Type.valueOf(args[i++].toUpperCase());
             String key = null, value = null;
             switch (type) {
                 case VALUE:
                 case DELETED:
-                    key = args[i + 1];
-                    value = args[i + 2];
+                    key = args[i++];
+                    value = args[i++];
             }
             return new OpResult(type, key, value);
         } catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {

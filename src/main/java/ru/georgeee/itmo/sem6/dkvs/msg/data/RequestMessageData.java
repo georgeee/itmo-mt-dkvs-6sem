@@ -17,7 +17,7 @@ public class RequestMessageData extends AbstractMessageData {
     }
 
     public RequestMessageData(Message parent) throws MessageParsingException {
-        this.command = Command.parseFromArgs(parent.getArgs(), 0);
+        this.command = Command.parseFromArgs(parent.getArgs(), 0).getLeft();
     }
 
     @Override

@@ -1,6 +1,8 @@
 package ru.georgeee.itmo.sem6.dkvs.msg;
 
 import lombok.Getter;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Arrays;
 import java.util.List;
@@ -37,22 +39,22 @@ public class Op implements ArgsAppendable {
     }
 
 
-    public static Op parseFromArgs(String[] args, int i) throws MessageParsingException {
+    public static Pair<Op, Integer> parseFromArgs(String[] args, int i) throws MessageParsingException {
         try {
-            Type type = Type.valueOf(args[i]);
+            Type type = Type.valueOf(args[i++]);
             String key = null, value = null;
             switch (type) {
                 case DELETE:
                 case GET:
                 case GET_CONSISTENT:
                 case SET:
-                    key = args[i + 1];
+                    key = args[i++];
             }
             switch (type) {
                 case SET:
-                    value = args[i + 2];
+                    value = args[i++];
             }
-            return new Op(type, key, value);
+            return new ImmutablePair<>(new Op(type, key, value), i);
         } catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
             throw new MessageParsingException("Error parsing from args: " + Arrays.toString(args), e);
         }

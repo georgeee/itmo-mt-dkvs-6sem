@@ -3,6 +3,8 @@ package ru.georgeee.itmo.sem6.dkvs.connectivity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.georgeee.itmo.sem6.dkvs.Destination;
+import ru.georgeee.itmo.sem6.dkvs.StateHolder;
+import ru.georgeee.itmo.sem6.dkvs.StateHolderImpl;
 import ru.georgeee.itmo.sem6.dkvs.config.Role;
 import ru.georgeee.itmo.sem6.dkvs.config.SystemConfiguration;
 import ru.georgeee.itmo.sem6.dkvs.msg.*;
@@ -28,6 +30,7 @@ class Replica extends AbstractInstance {
     private final List<Command> proposals;
     //How much slots we can keep undecided
     private final int slotWindow;
+    //
     private int slotIn;
     private int slotOut;
 
@@ -54,24 +57,21 @@ class Replica extends AbstractInstance {
         }
     }
 
-    private void send(Message message, Destination destination) {
-        node.getConnectionManager().send(message, destination);
-    }
-
     private void propose() {
         while ((slotWindow <= 0 || slotIn < slotOut + slotWindow) && !commandQueue.isEmpty()) {
             if (decisions.get(slotIn) == null) {
-                final Command command = commandQueue.poll();
+                Command command = commandQueue.poll();
+                final Message message = new ProposeMessageData(slotIn, command).createMessage();
                 proposals.set(slotIn, command);
                 setState(command, CommandState.PROPOSED);
                 executeRepeating(new IsDecidedPredicate(slotIn), new Runnable() {
                     @Override
                     public void run() {
                         for (Destination leader : leaders) {
-                            send(new ProposeMessageData(slotIn, command).createMessage(), leader);
+                            send(message, leader);
                         }
                     }
-                });
+                }, "waiting for decision for slot " + slotIn);
             }
             ++slotIn;
             enlargeSlotSets(slotIn);

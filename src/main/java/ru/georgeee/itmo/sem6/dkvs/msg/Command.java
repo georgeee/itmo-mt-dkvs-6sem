@@ -1,6 +1,8 @@
 package ru.georgeee.itmo.sem6.dkvs.msg;
 
 import lombok.Getter;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
 
@@ -20,12 +22,14 @@ public class Command implements ArgsAppendable {
         this.op = op;
     }
 
-    public static Command parseFromArgs(String[] args, int i) throws MessageParsingException {
+    public static Pair<Command, Integer> parseFromArgs(String[] args, int i) throws MessageParsingException {
         try {
-            String clientId = args[i];
-            int commandId = Integer.parseInt(args[i + 1]);
-            Op op = Op.parseFromArgs(args, i + 2);
-            return new Command(clientId, commandId, op);
+            String clientId = args[i++];
+            int commandId = Integer.parseInt(args[i++]);
+            Pair<Op, Integer> opPair = Op.parseFromArgs(args, i);
+            Op op = opPair.getLeft();
+            i = opPair.getRight();
+            return new ImmutablePair<>(new Command(clientId, commandId, op), i);
         } catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
             throw new MessageParsingException(args, e);
         }

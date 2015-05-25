@@ -1,4 +1,4 @@
-package ru.georgeee.itmo.sem6.dkvs.connectivity;
+package ru.georgeee.itmo.sem6.dkvs;
 
 import ru.georgeee.itmo.sem6.dkvs.msg.Op;
 import ru.georgeee.itmo.sem6.dkvs.msg.OpResult;
