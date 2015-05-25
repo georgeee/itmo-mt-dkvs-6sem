@@ -18,9 +18,9 @@ import static ru.georgeee.itmo.sem6.dkvs.msg.Message.Type.*;
 
 public class Node {
     private static final Logger log = LoggerFactory.getLogger(Node.class);
-    @Getter(AccessLevel.PACKAGE)
+    @Getter (AccessLevel.PACKAGE)
     private final NodeConfiguration nodeConfiguration;
-    @Getter(AccessLevel.PACKAGE)
+    @Getter (AccessLevel.PACKAGE)
     private final ConnectionManager connectionManager;
     private final Map<Message.Type, Consumer<Message>> consumers;
     private final Acceptor acceptor;

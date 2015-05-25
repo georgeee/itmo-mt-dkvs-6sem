@@ -1,11 +1,12 @@
 package ru.georgeee.itmo.sem6.dkvs;
 
 import lombok.Getter;
+import ru.georgeee.itmo.sem6.dkvs.msg.ArgsField;
 
 public class Destination {
-    @Getter
+    @Getter @ArgsField
     private final Type type;
-    @Getter
+    @Getter @ArgsField
     private final String id;
 
     public Destination(Type type, String id) {

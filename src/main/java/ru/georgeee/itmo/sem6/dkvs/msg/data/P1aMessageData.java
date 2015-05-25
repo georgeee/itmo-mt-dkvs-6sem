@@ -1,44 +1,26 @@
 package ru.georgeee.itmo.sem6.dkvs.msg.data;
 
 import lombok.Getter;
+import ru.georgeee.itmo.sem6.dkvs.msg.ArgsConstructor;
+import ru.georgeee.itmo.sem6.dkvs.msg.ArgsField;
+import ru.georgeee.itmo.sem6.dkvs.msg.BallotNumber;
 import ru.georgeee.itmo.sem6.dkvs.msg.Message;
-import ru.georgeee.itmo.sem6.dkvs.msg.MessageParsingException;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class P1aMessageData extends AbstractMessageData {
-    @Getter
+    @Getter @ArgsField
     private final String leaderId;
-    @Getter
-    private final int ballotId;
+    @Getter @ArgsField
+    private final BallotNumber ballotNumber;
 
-    public P1aMessageData(String leaderId, int ballotId) {
+    @ArgsConstructor
+    public P1aMessageData(String leaderId, BallotNumber ballotNumber) {
         this.leaderId = leaderId;
-        this.ballotId = ballotId;
-    }
-
-
-    public P1aMessageData(Message parent) throws MessageParsingException {
-        try {
-            this.leaderId = parent.getArgs()[0];
-            this.ballotId = Integer.parseInt(parent.getArgs()[1]);
-        } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
-            throw new MessageParsingException(parent.getArgs());
-        }
+        this.ballotNumber = ballotNumber;
     }
 
     @Override
     protected Message.Type getType() {
         return Message.Type.P1A;
-    }
-
-    @Override
-    protected List<String> getArgs() {
-        List<String> args = new ArrayList<>();
-        appendToArgs(args, leaderId);
-        appendToArgs(args, ballotId);
-        return args;
     }
 
 }

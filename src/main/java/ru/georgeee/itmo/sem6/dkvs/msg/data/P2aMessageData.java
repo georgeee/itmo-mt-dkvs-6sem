@@ -1,44 +1,23 @@
 package ru.georgeee.itmo.sem6.dkvs.msg.data;
 
 import lombok.Getter;
-import ru.georgeee.itmo.sem6.dkvs.msg.Message;
-import ru.georgeee.itmo.sem6.dkvs.msg.MessageParsingException;
-import ru.georgeee.itmo.sem6.dkvs.msg.PValue;
-
-import java.util.ArrayList;
-import java.util.List;
+import ru.georgeee.itmo.sem6.dkvs.msg.*;
 
 public class P2aMessageData extends AbstractMessageData {
-    @Getter
+    @Getter @ArgsField
     private final String leaderId;
-    @Getter
+    @Getter @ArgsField
     private final PValue pValue;
 
+    @ArgsConstructor
     public P2aMessageData(String leaderId, PValue pValue) {
         this.leaderId = leaderId;
         this.pValue = pValue;
     }
 
-    public P2aMessageData(Message parent) throws MessageParsingException {
-        try {
-            this.leaderId = parent.getArgs()[0];
-            this.pValue = PValue.parseFromArgs(parent.getArgs(), 1).getLeft();
-        } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
-            throw new MessageParsingException(parent.getArgs());
-        }
-    }
-
     @Override
     protected Message.Type getType() {
         return Message.Type.P2A;
-    }
-
-    @Override
-    protected List<String> getArgs() {
-        List<String> args = new ArrayList<>();
-        appendToArgs(args, leaderId);
-        appendToArgs(args, pValue);
-        return args;
     }
 
 }

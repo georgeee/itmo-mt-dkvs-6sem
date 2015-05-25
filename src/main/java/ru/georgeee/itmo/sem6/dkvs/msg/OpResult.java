@@ -1,18 +1,24 @@
 package ru.georgeee.itmo.sem6.dkvs.msg;
 
 import lombok.Getter;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Arrays;
 import java.util.List;
 
-public class OpResult implements ArgsAppendable {
+public class OpResult implements ArgsConvertibleExtended {
     @Getter
+    @ArgsField
     private final Type type;
     @Getter
+    @ArgsField
     private final String key;
     @Getter
+    @ArgsField
     private final String value;
 
+    @ArgsConstructor
     private OpResult(Type type, String key, String value) {
         this.type = type;
         this.key = key;
@@ -35,7 +41,7 @@ public class OpResult implements ArgsAppendable {
         return new OpResult(Type.DELETED, key, value);
     }
 
-    public static OpResult parseFromArgs(String[] args, int i) throws MessageParsingException {
+    public static Pair<OpResult, Integer> parseFromArgs(String[] args, int i) throws MessageParsingException {
         try {
             Type type = Type.valueOf(args[i++].toUpperCase());
             String key = null, value = null;
@@ -45,15 +51,15 @@ public class OpResult implements ArgsAppendable {
                     key = args[i++];
                     value = args[i++];
             }
-            return new OpResult(type, key, value);
+            return new ImmutablePair<>(new OpResult(type, key, value), i);
         } catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
             throw new MessageParsingException("Error parsing from args: " + Arrays.toString(args), e);
         }
     }
 
     @Override
-    public void appendToArgs(List<String> args) {
-        args.add(type.toString());
+    public void addToArgs(List<Object> args) {
+        args.add(type);
         if (key != null) {
             args.add(key);
             if (value != null) {

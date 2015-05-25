@@ -1,7 +1,6 @@
 package ru.georgeee.itmo.sem6.dkvs.msg;
 
 import lombok.Getter;
-import ru.georgeee.itmo.sem6.dkvs.msg.data.*;
 
 public class Message {
 
@@ -31,44 +30,8 @@ public class Message {
         }
     }
 
-    public RequestMessageData getRequestData() throws MessageParsingException {
-        return new RequestMessageData(this);
-    }
-
-    public ProposeMessageData getProposeData() throws MessageParsingException {
-        return new ProposeMessageData(this);
-    }
-
-    public DecisionMessageData getDecisionData() throws MessageParsingException {
-        return new DecisionMessageData(this);
-    }
-
-    public ResponseMessageData getResponseData() throws MessageParsingException {
-        return new ResponseMessageData(this);
-    }
-
-    public P1aMessageData getP1aData() throws MessageParsingException {
-        return new P1aMessageData(this);
-    }
-
-    public AdoptedMessageData getAdoptedData() throws MessageParsingException {
-        return new AdoptedMessageData(this);
-    }
-
-    public PreemptedMessageData getPreemptedData() throws MessageParsingException {
-        return new PreemptedMessageData(this);
-    }
-
-    public P2bMessageData getP2bData() throws MessageParsingException {
-        return new P2bMessageData(this);
-    }
-
-    public P1bMessageData getP1bData() throws MessageParsingException {
-        return new P1bMessageData(this);
-    }
-
-    public P2aMessageData getP2aData() throws MessageParsingException {
-        return new P2aMessageData(this);
+    public <T extends ArgsConvertible> T getAs(Class<T> clazz) throws MessageParsingException {
+        return ArgsConverter.parse(clazz, this);
     }
 
     public String toString() {

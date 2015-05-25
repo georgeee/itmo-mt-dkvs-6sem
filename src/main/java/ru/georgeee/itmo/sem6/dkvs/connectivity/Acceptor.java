@@ -3,6 +3,7 @@ package ru.georgeee.itmo.sem6.dkvs.connectivity;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.georgeee.itmo.sem6.dkvs.msg.BallotNumber;
 import ru.georgeee.itmo.sem6.dkvs.msg.Message;
 import ru.georgeee.itmo.sem6.dkvs.msg.MessageParsingException;
 import ru.georgeee.itmo.sem6.dkvs.msg.PValue;
@@ -17,7 +18,7 @@ import java.util.Set;
 class Acceptor extends AbstractInstance {
     private static final Logger log = LoggerFactory.getLogger(Acceptor.class);
 
-    private int ballotNumber;
+    private BallotNumber ballotNumber;
     private final Set<PValue> accepted;
 
     public Acceptor(Node node) {
@@ -30,10 +31,10 @@ class Acceptor extends AbstractInstance {
         try {
             switch (message.getType()) {
                 case P1A:
-                    process(message.getP1aData());
+                    process(message.getAs(P1aMessageData.class));
                     break;
                 case P2A:
-                    process(message.getP2aData());
+                    process(message.getAs(P2aMessageData.class));
                     break;
                 default:
                     throw new IllegalArgumentException("Unknown message type " + message.getType());
@@ -44,8 +45,8 @@ class Acceptor extends AbstractInstance {
     }
 
     private void process(P1aMessageData p1aData) {
-        int b = p1aData.getBallotId();
-        if (b > ballotNumber) {
+        BallotNumber b = p1aData.getBallotNumber();
+        if (b.compareTo(ballotNumber) > 0) {
             ballotNumber = b;
         }
         //Executing non-repeating, cause we have no condition to check
@@ -56,8 +57,8 @@ class Acceptor extends AbstractInstance {
 
     private void process(P2aMessageData p2aData) {
         PValue pValue = p2aData.getPValue();
-        int b = pValue.getBallotId();
-        if (b == ballotNumber) {
+        BallotNumber b = pValue.getBallotNumber();
+        if (b.equals(ballotNumber)) {
             accepted.add(pValue);
         }
         //Executing non-repeating, cause we have no condition to check

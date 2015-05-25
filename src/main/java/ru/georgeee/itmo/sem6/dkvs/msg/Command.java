@@ -1,38 +1,22 @@
 package ru.georgeee.itmo.sem6.dkvs.msg;
 
 import lombok.Getter;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.List;
-
-public class Command implements ArgsAppendable {
-    @Getter
+public class Command implements ArgsConvertible {
+    @Getter @ArgsField
     private final String clientId;
 
-    @Getter
+    @Getter @ArgsField
     private final int commandId;
 
-    @Getter
+    @Getter @ArgsField
     private final Op op;
 
+    @ArgsConstructor
     public Command(String clientId, int commandId, Op op) {
         this.clientId = clientId;
         this.commandId = commandId;
         this.op = op;
-    }
-
-    public static Pair<Command, Integer> parseFromArgs(String[] args, int i) throws MessageParsingException {
-        try {
-            String clientId = args[i++];
-            int commandId = Integer.parseInt(args[i++]);
-            Pair<Op, Integer> opPair = Op.parseFromArgs(args, i);
-            Op op = opPair.getLeft();
-            i = opPair.getRight();
-            return new ImmutablePair<>(new Command(clientId, commandId, op), i);
-        } catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
-            throw new MessageParsingException(args, e);
-        }
     }
 
     @Override
@@ -62,13 +46,6 @@ public class Command implements ArgsAppendable {
                 ", commandId=" + commandId +
                 ", op=" + op +
                 '}';
-    }
-
-    @Override
-    public void appendToArgs(List<String> args) {
-        args.add(clientId);
-        args.add(String.valueOf(commandId));
-        op.appendToArgs(args);
     }
 
 }

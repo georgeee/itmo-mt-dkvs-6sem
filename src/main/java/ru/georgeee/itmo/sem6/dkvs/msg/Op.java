@@ -7,14 +7,15 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.util.Arrays;
 import java.util.List;
 
-public class Op implements ArgsAppendable {
-    @Getter
+public class Op implements ArgsConvertibleExtended {
+    @Getter @ArgsField
     private final Type type;
-    @Getter
+    @Getter @ArgsField
     private final String key;
-    @Getter
+    @Getter @ArgsField
     private final String value;
 
+    @ArgsConstructor
     private Op(Type type, String key, String value) {
         this.type = type;
         this.key = key;
@@ -70,8 +71,8 @@ public class Op implements ArgsAppendable {
     }
 
     @Override
-    public void appendToArgs(List<String> args) {
-        args.add(type.toString());
+    public void addToArgs(List<Object> args) {
+        args.add(type);
         if (key != null) {
             args.add(key);
             if (value != null) {

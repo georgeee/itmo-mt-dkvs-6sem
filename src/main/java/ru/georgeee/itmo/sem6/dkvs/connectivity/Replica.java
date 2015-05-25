@@ -26,6 +26,7 @@ class Replica extends AbstractInstance {
     private final Map<Command, CommandState> commandStates;
     private final Map<Command, OpResult> commandResults;
     private final List<Destination> leaders;
+    //@TODO rewrite: most of the space will be filled with nulls
     private final List<Command> decisions;
     private final List<Command> proposals;
     //How much slots we can keep undecided
@@ -95,10 +96,10 @@ class Replica extends AbstractInstance {
         try {
             switch (message.getType()) {
                 case REQUEST:
-                    process(message.getRequestData());
+                    process(message.getAs(RequestMessageData.class));
                     break;
                 case DECISION:
-                    process(message.getDecisionData());
+                    process(message.getAs(DecisionMessageData.class));
                     break;
                 default:
                     throw new IllegalArgumentException("Unknown message type " + message.getType());

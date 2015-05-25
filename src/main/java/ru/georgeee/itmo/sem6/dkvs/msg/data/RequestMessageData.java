@@ -1,23 +1,15 @@
 package ru.georgeee.itmo.sem6.dkvs.msg.data;
 
 import lombok.Getter;
-import ru.georgeee.itmo.sem6.dkvs.msg.Command;
-import ru.georgeee.itmo.sem6.dkvs.msg.Message;
-import ru.georgeee.itmo.sem6.dkvs.msg.MessageParsingException;
-
-import java.util.ArrayList;
-import java.util.List;
+import ru.georgeee.itmo.sem6.dkvs.msg.*;
 
 public class RequestMessageData extends AbstractMessageData {
-    @Getter
+    @Getter @ArgsField
     private final Command command;
 
+    @ArgsConstructor
     public RequestMessageData(Command command) {
         this.command = command;
-    }
-
-    public RequestMessageData(Message parent) throws MessageParsingException {
-        this.command = Command.parseFromArgs(parent.getArgs(), 0).getLeft();
     }
 
     @Override
@@ -25,10 +17,4 @@ public class RequestMessageData extends AbstractMessageData {
         return Message.Type.REQUEST;
     }
 
-    @Override
-    protected List<String> getArgs() {
-        List<String> args = new ArrayList<>();
-        appendToArgs(args, command);
-        return args;
-    }
 }
