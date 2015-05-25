@@ -5,15 +5,15 @@ import lombok.Getter;
 public class BallotNumber implements ArgsConvertible, Comparable<BallotNumber> {
     @Getter
     @ArgsField
-    private String leaderId;
+    private final int ballotId;
     @Getter
     @ArgsField
-    private int ballotId;
+    private final String leaderId;
 
     @ArgsConstructor
-    public BallotNumber(String leaderId, int ballotId) {
-        this.leaderId = leaderId;
+    public BallotNumber(int ballotId, String leaderId) {
         this.ballotId = ballotId;
+        this.leaderId = leaderId;
     }
 
     @Override
