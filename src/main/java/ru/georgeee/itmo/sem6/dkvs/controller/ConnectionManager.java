@@ -1,4 +1,4 @@
-package ru.georgeee.itmo.sem6.dkvs.connectivity;
+package ru.georgeee.itmo.sem6.dkvs.controller;
 
 import lombok.Getter;
 import org.slf4j.Logger;

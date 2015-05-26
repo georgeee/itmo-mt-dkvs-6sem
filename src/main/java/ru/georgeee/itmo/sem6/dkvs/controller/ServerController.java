@@ -1,4 +1,4 @@
-package ru.georgeee.itmo.sem6.dkvs.connectivity;
+package ru.georgeee.itmo.sem6.dkvs.controller;
 
 import lombok.AccessLevel;
 import lombok.Getter;

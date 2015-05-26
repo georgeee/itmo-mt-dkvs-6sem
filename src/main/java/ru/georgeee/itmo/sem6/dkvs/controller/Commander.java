@@ -1,36 +1,35 @@
-package ru.georgeee.itmo.sem6.dkvs.connectivity;
+package ru.georgeee.itmo.sem6.dkvs.controller;
 
 import ru.georgeee.itmo.sem6.dkvs.Consumer;
 import ru.georgeee.itmo.sem6.dkvs.msg.BallotNumber;
 import ru.georgeee.itmo.sem6.dkvs.msg.Message;
 import ru.georgeee.itmo.sem6.dkvs.msg.PValue;
-import ru.georgeee.itmo.sem6.dkvs.msg.data.P1aMessageData;
-import ru.georgeee.itmo.sem6.dkvs.msg.data.P1bMessageData;
+import ru.georgeee.itmo.sem6.dkvs.msg.data.P2aMessageData;
+import ru.georgeee.itmo.sem6.dkvs.msg.data.P2bMessageData;
 
-import java.util.HashSet;
-import java.util.Set;
-
-class Scout extends MajorityWaiter implements Consumer<P1bMessageData> {
+class Commander extends MajorityWaiter implements Consumer<P2bMessageData> {
     private final Leader leader;
+    private final int commanderId;
     private final BallotNumber b;
-    private final Set<PValue> pValues;
+    private final PValue pValue;
 
-    Scout(Leader leader, BallotNumber b) {
+
+    Commander(Leader leader, int commanderId, PValue pValue) {
         super(leader.acceptors, leader);
         this.leader = leader;
-        this.b = b;
-        this.pValues = new HashSet<>();
+        this.commanderId = commanderId;
+        this.pValue = pValue;
+        this.b = pValue.getBallotNumber();
     }
 
 
     @Override
-    public void consume(P1bMessageData msg) {
+    public void consume(P2bMessageData msg) {
         BallotNumber b2 = msg.getBallotNumber();
         if (b.equals(b2)) {
-            pValues.addAll(msg.getAccepted());
             removeDestination(msg.getAcceptorId());
             if (isReceivedEnough()) {
-                leader.reportAdopted(b, pValues);
+                leader.registerDecision(pValue.getSlotId(), pValue.getCommand());
                 unregister();
             }
         } else {
@@ -41,16 +40,17 @@ class Scout extends MajorityWaiter implements Consumer<P1bMessageData> {
 
     private void unregister() {
         stop();
-        leader.scouts.remove(b.getBallotId());
+        leader.commanders.remove(commanderId);
     }
+
 
     @Override
     protected Message getInitMessage() {
-        return new P1aMessageData(leader.getSelfId(), b).createMessage();
+        return new P2aMessageData(leader.getSelfId(), commanderId, pValue).createMessage();
     }
 
     @Override
     protected String getName() {
-        return "scout " + b;
+        return "commander " + commanderId;
     }
 }

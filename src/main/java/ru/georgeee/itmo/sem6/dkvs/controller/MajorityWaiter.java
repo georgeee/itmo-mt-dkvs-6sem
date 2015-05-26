@@ -1,4 +1,4 @@
-package ru.georgeee.itmo.sem6.dkvs.connectivity;
+package ru.georgeee.itmo.sem6.dkvs.controller;
 
 import ru.georgeee.itmo.sem6.dkvs.Destination;
 import ru.georgeee.itmo.sem6.dkvs.msg.Message;
