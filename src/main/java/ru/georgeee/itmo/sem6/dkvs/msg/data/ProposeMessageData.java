@@ -11,11 +11,17 @@ public class ProposeMessageData extends AbstractMessageData {
     private final int slotId;
     @Getter @ArgsField
     private final Command command;
+    /**
+     * Not from paper, is needed for some optimization
+     */
+    @Getter @ArgsField
+    private final String replicaId;
 
     @ArgsConstructor
-    public ProposeMessageData(int slotId, Command command) {
+    public ProposeMessageData(int slotId, Command command, String replicaId) {
         this.slotId = slotId;
         this.command = command;
+        this.replicaId = replicaId;
     }
 
     @Override

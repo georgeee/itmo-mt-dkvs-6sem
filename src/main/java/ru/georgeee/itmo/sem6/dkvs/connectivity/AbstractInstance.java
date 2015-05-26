@@ -11,17 +11,23 @@ import java.util.Queue;
 import java.util.concurrent.*;
 
 abstract class AbstractInstance implements Consumer<Message>, Runnable {
+    protected static final Predicate TRUE_PREDICATE = new Predicate() {
+        @Override
+        public boolean evaluate() {
+            return true;
+        }
+    };
     private static final Logger log = LoggerFactory.getLogger(AbstractInstance.class);
     private static final int QUEUE_CAPACITY = 1000;
     protected final BlockingQueue<Message> messageQueue;
     protected final Queue<RepeatingTask> repeatQueue;
+    private final AbstractController controller;
     private final ScheduledExecutorService repeatService;
     private final int repeatTimeout;
-    final Node node;
 
-    public AbstractInstance(Node node) {
-        SystemConfiguration sysConfiguration = node.getConnectionManager().getSystemConfiguration();
-        this.node = node;
+    public AbstractInstance(AbstractController controller) {
+        SystemConfiguration sysConfiguration = controller.getConnectionManager().getSystemConfiguration();
+        this.controller = controller;
         this.messageQueue = createBlockingQueue();
         this.repeatQueue = new ConcurrentLinkedQueue<>();
         this.repeatService = Executors.newScheduledThreadPool(sysConfiguration.getInstanceRepeatPoolSize());
@@ -36,12 +42,18 @@ abstract class AbstractInstance implements Consumer<Message>, Runnable {
      * Repeats action (after timeouts) until condition evaluates to true
      * Action is being executed in the same thread, by which messages are consumed
      * (so that we maintain single-thread access to instance structures)
+     * <p/>
+     * Method is intended to be used only to tasks, which are critical for liveness.
      *
      * @param predicate condition
-     * @param runnable  action
+     * @param task      action
      */
-    protected void executeRepeating(Predicate predicate, Runnable runnable, String commentary) {
-        new RepeatingTask(predicate, runnable, commentary).run();
+    protected void executeRepeating(Predicate predicate, Runnable task, String commentary) {
+        new RepeatingTask(predicate, task, commentary).run();
+    }
+
+    protected void addForExecution(Runnable task){
+        new RepeatingTask(TRUE_PREDICATE, task, "").run();
     }
 
     /**
@@ -57,14 +69,15 @@ abstract class AbstractInstance implements Consumer<Message>, Runnable {
     protected abstract void consumeImpl(Message t);
 
     protected void sendToNode(Message message, String nodeId) {
-        node.getConnectionManager().send(message, new Destination(Destination.Type.NODE, nodeId));
+        controller.getConnectionManager().send(message, new Destination(Destination.Type.NODE, nodeId));
     }
+
     protected void send(Message message, Destination destination) {
-        node.getConnectionManager().send(message, destination);
+        controller.getConnectionManager().send(message, destination);
     }
 
     protected String getSelfId() {
-        return node.getNodeConfiguration().getId();
+        return controller.getId();
     }
 
     @Override
@@ -76,11 +89,12 @@ abstract class AbstractInstance implements Consumer<Message>, Runnable {
             }
             processRepeats();
             try {
+                Message message = null;
                 try {
-                    Message t = messageQueue.take();
-                    consumeImpl(t);
+                    message = messageQueue.take();
+                    consumeImpl(message);
                 } catch (RuntimeException e) {
-                    log.error("Error occurred consuming message by " + this.getClass(), e);
+                    log.error("Error occurred consuming message " + message + " by " + this.getClass(), e);
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -92,11 +106,18 @@ abstract class AbstractInstance implements Consumer<Message>, Runnable {
     private void processRepeats() {
         RepeatingTask task;
         while ((task = repeatQueue.poll()) != null) {
-            task.doRepeat();
+            boolean needRepeat = task.doRepeat();
+            if (needRepeat) {
+                repeatService.schedule(task, repeatTimeout, TimeUnit.MILLISECONDS);
+            }
         }
     }
 
-    private class RepeatingTask implements Runnable {
+    protected static interface Predicate {
+        boolean evaluate();
+    }
+
+    private final class RepeatingTask implements Runnable {
         private final Predicate predicate;
         private final Runnable runnable;
         private final String commentary;
@@ -112,16 +133,13 @@ abstract class AbstractInstance implements Consumer<Message>, Runnable {
             repeatQueue.add(this);
         }
 
-        public void doRepeat() {
+        public boolean doRepeat() {
             if (!predicate.evaluate()) {
                 log.info("Predicate evaluated to false, repeating: {}", commentary);
                 runnable.run();
-                repeatService.schedule(this, repeatTimeout, TimeUnit.MILLISECONDS);
+                return true;
             }
+            return false;
         }
-    }
-
-    protected static interface Predicate {
-        boolean evaluate();
     }
 }

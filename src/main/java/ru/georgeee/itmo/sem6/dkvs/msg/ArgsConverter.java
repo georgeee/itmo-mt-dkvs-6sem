@@ -7,9 +7,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public class ArgsConverter {
     /**
@@ -45,24 +43,40 @@ public class ArgsConverter {
                     } else {
                         throw new UnsupportedOperationException("Doesn't support type: " + field.getType());
                     }
+                } else if (field.getType().equals(Integer.class)) {
+                    constructorArguments.add(Integer.parseInt(args[i++]));
                 } else if (field.getType().equals(String.class)) {
                     constructorArguments.add(args[i++]);
+                } else if (Enum.class.isAssignableFrom(field.getType())) {
+                    Class<? extends Enum> fieldClass = (Class<? extends Enum>) field.getType();
+                    constructorArguments.add(Enum.valueOf(fieldClass, args[i++]));
                 } else if (ArgsConvertible.class.isAssignableFrom(field.getType())) {
                     Pair<ArgsConvertible, Integer> pair = parseImpl(field.getType(), args, i);
                     i = pair.getRight();
                     constructorArguments.add(pair.getLeft());
-                } else if (Collection.class.isAssignableFrom(field.getType())) {
-                    if (field.isAnnotationPresent(ArgsCollectionField.class)) {
-                        ArgsCollectionField argsCollectionField = field.getAnnotation(ArgsCollectionField.class);
-                        Class elementType = argsCollectionField.element();
-                        Collection collection = argsCollectionField.container().newInstance();
-                        while (i < args.length) {
-                            Pair<ArgsConvertible, Integer> pair = parseImpl(elementType, args, i);
-                            i = pair.getRight();
-                            collection.add(pair.getLeft());
-                        }
-                        constructorArguments.add(collection);
+                } else if (Map.class.isAssignableFrom(field.getType()) && field.isAnnotationPresent(ArgsCollectionField.class)) {
+                    ArgsMapField mapField = field.getAnnotation(ArgsMapField.class);
+                    Class keyType = mapField.key();
+                    Class valueType = mapField.value();
+                    Map map = mapField.container().newInstance();
+                    while (i < args.length) {
+                        Pair<ArgsConvertible, Integer> pair1 = parseImpl(keyType, args, i);
+                        i = pair1.getRight();
+                        Pair<ArgsConvertible, Integer> pair2 = parseImpl(valueType, args, i);
+                        i = pair2.getRight();
+                        map.put(pair1.getLeft(), pair2.getLeft());
                     }
+                    constructorArguments.add(map);
+                } else if (Collection.class.isAssignableFrom(field.getType()) && (field.isAnnotationPresent(ArgsCollectionField.class))) {
+                    ArgsCollectionField argsCollectionField = field.getAnnotation(ArgsCollectionField.class);
+                    Class elementType = argsCollectionField.element();
+                    Collection collection = argsCollectionField.container().newInstance();
+                    while (i < args.length) {
+                        Pair<ArgsConvertible, Integer> pair = parseImpl(elementType, args, i);
+                        i = pair.getRight();
+                        collection.add(pair.getLeft());
+                    }
+                    constructorArguments.add(collection);
                 } else {
                     throw new UnsupportedOperationException("Doesn't support type: " + field.getType());
                 }
@@ -118,6 +132,16 @@ public class ArgsConverter {
         return result;
     }
 
+    private static void addObjectToArgs(Object object, List<Object> args) {
+        if (object instanceof ArgsConvertible) {
+            addToArgs((ArgsConvertible) object, args);
+        } else if (object instanceof Enum) {
+            args.add(((Enum) object).name());
+        } else {
+            args.add(object);
+        }
+    }
+
     private static void addToArgs(ArgsConvertible data, List<Object> args) {
         Class clazz = data.getClass();
         if (data instanceof ArgsConvertibleExtended) {
@@ -130,19 +154,29 @@ public class ArgsConverter {
                 } else {
                     throw new UnsupportedOperationException("Doesn't support type: " + field.getType());
                 }
+            } else if (Enum.class.isAssignableFrom(field.getType())) {
+                args.add(((Enum) getValue(data, field)).name());
             } else if (ArgsConvertible.class.isAssignableFrom(field.getType())) {
                 addToArgs((ArgsConvertible) getValue(data, field), args);
+            } else if (Map.class.isAssignableFrom(field.getType())) {
+                if (field.isAnnotationPresent(ArgsCollectionField.class)) {
+                    ArgsMapField mapField = field.getAnnotation(ArgsMapField.class);
+                    Class keyType = mapField.key();
+                    Class valueType = mapField.value();
+                    Map map = (Map) getValue(data, field);
+                    Set<Map.Entry> entries = map.entrySet();
+                    for (Map.Entry entry : entries) {
+                        addObjectToArgs(entry.getKey(), args);
+                        addObjectToArgs(entry.getValue(), args);
+                    }
+                }
             } else if (Collection.class.isAssignableFrom(field.getType())) {
                 if (field.isAnnotationPresent(ArgsCollectionField.class)) {
-                    ArgsCollectionField argsCollectionField = field.getAnnotation(ArgsCollectionField.class);
-                    Class elementType = argsCollectionField.element();
+                    ArgsCollectionField collectionField = field.getAnnotation(ArgsCollectionField.class);
+                    Class elementType = collectionField.element();
                     Collection collection = (Collection) getValue(data, field);
                     for (Object element : collection) {
-                        if (ArgsConvertible.class.isAssignableFrom(elementType)) {
-                            addToArgs((ArgsConvertible) element, args);
-                        } else {
-                            args.add(element);
-                        }
+                        addObjectToArgs(element, args);
                     }
                 }
             } else {

@@ -1,14 +1,17 @@
 package ru.georgeee.itmo.sem6.dkvs;
 
 import lombok.Getter;
+import ru.georgeee.itmo.sem6.dkvs.msg.ArgsConstructor;
+import ru.georgeee.itmo.sem6.dkvs.msg.ArgsConvertible;
 import ru.georgeee.itmo.sem6.dkvs.msg.ArgsField;
 
-public class Destination {
+public class Destination implements ArgsConvertible{
     @Getter @ArgsField
     private final Type type;
     @Getter @ArgsField
     private final String id;
 
+    @ArgsConstructor
     public Destination(Type type, String id) {
         if (type == null || id == null) {
             throw new IllegalArgumentException("Neither type nor id can be null for destination");

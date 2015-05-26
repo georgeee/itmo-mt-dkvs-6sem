@@ -38,6 +38,6 @@ public class BallotNumber implements ArgsConvertible, Comparable<BallotNumber> {
 
     @Override
     public int compareTo(BallotNumber o) {
-        return o.leaderId.equals(leaderId) ? Integer.valueOf(ballotId).compareTo(ballotId) : leaderId.compareTo(o.leaderId);
+        return o.leaderId.equals(leaderId) ? Integer.compare(ballotId, o.ballotId) : leaderId.compareTo(o.leaderId);
     }
 }

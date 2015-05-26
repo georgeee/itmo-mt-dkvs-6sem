@@ -10,11 +10,14 @@ public class P2bMessageData extends AbstractMessageData {
     @Getter @ArgsField
     private final String acceptorId;
     @Getter @ArgsField
+    private final int commanderId;
+    @Getter @ArgsField
     private final BallotNumber ballotNumber;
 
     @ArgsConstructor
-    public P2bMessageData(String acceptorId, BallotNumber ballotNumber) {
+    public P2bMessageData(String acceptorId, int commanderId, BallotNumber ballotNumber) {
         this.acceptorId = acceptorId;
+        this.commanderId = commanderId;
         this.ballotNumber = ballotNumber;
     }
 

@@ -21,8 +21,8 @@ class Acceptor extends AbstractInstance {
     private BallotNumber ballotNumber;
     private final Set<PValue> accepted;
 
-    public Acceptor(Node node) {
-        super(node);
+    public Acceptor(AbstractController controller) {
+        super(controller);
         accepted = new HashSet<>();
     }
 
@@ -63,7 +63,7 @@ class Acceptor extends AbstractInstance {
         }
         //Executing non-repeating, cause we have no condition to check
         //Which is expected, assuming that acceptor is kind of memory
-        Message message = new P2bMessageData(getSelfId(), ballotNumber).createMessage();
+        Message message = new P2bMessageData(getSelfId(), p2aData.getCommanderId(), ballotNumber).createMessage();
         sendToNode(message, p2aData.getLeaderId());
     }
 

@@ -35,9 +35,9 @@ class Replica extends AbstractInstance {
     private int slotIn;
     private int slotOut;
 
-    public Replica(Node node) {
-        super(node);
-        SystemConfiguration configuration = node.getConnectionManager().getSystemConfiguration();
+    public Replica(AbstractController controller) {
+        super(controller);
+        SystemConfiguration configuration = controller.getConnectionManager().getSystemConfiguration();
         commandQueue = new ArrayDeque<>();
         leaders = configuration.getDestinations(Role.LEADER);
         slotWindow = configuration.getPaxosSlotWindow();
@@ -62,7 +62,7 @@ class Replica extends AbstractInstance {
         while ((slotWindow <= 0 || slotIn < slotOut + slotWindow) && !commandQueue.isEmpty()) {
             if (decisions.get(slotIn) == null) {
                 Command command = commandQueue.poll();
-                final Message message = new ProposeMessageData(slotIn, command).createMessage();
+                final Message message = new ProposeMessageData(slotIn, command, getSelfId()).createMessage();
                 proposals.set(slotIn, command);
                 setState(command, CommandState.PROPOSED);
                 executeRepeating(new IsDecidedPredicate(slotIn), new Runnable() {

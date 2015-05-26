@@ -43,8 +43,10 @@ public class Message {
     }
 
     public enum Type {
+        //Types from Paxos paper
         REQUEST, RESPONSE, DECISION, PROPOSE,
-        P1A, P1B, P2A, P2B, ADOPTED, PREEMPTED,
+        P1A, P1B, P2A, P2B,
+        //Custom types
         PING, PONG
     }
 }

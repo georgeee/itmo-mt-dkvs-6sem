@@ -7,11 +7,14 @@ public class P2aMessageData extends AbstractMessageData {
     @Getter @ArgsField
     private final String leaderId;
     @Getter @ArgsField
+    private final int commanderId;
+    @Getter @ArgsField
     private final PValue pValue;
 
     @ArgsConstructor
-    public P2aMessageData(String leaderId, PValue pValue) {
+    public P2aMessageData(String leaderId, int commanderId, PValue pValue) {
         this.leaderId = leaderId;
+        this.commanderId = commanderId;
         this.pValue = pValue;
     }
 

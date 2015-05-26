@@ -13,12 +13,12 @@ public class P1bMessageData extends AbstractMessageData {
     @Getter
     @ArgsField
     private final BallotNumber ballotNumber;
+
     @Getter
     @ArgsField
     @ArgsCollectionField(element = PValue.class, container = HashSet.class)
     private final Set<PValue> accepted;
 
-    @ArgsConstructor
     public P1bMessageData(String acceptorId, BallotNumber ballotNumber, Set<PValue> accepted) {
         this.acceptorId = acceptorId;
         this.ballotNumber = ballotNumber;

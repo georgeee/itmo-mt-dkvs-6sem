@@ -26,6 +26,7 @@ public class PValue implements ArgsConvertible {
 
         if (slotId != pValue.slotId) return false;
         if (!ballotNumber.equals(pValue.ballotNumber)) return false;
+        if (!command.equals(pValue.command)) return false;
 
         return true;
     }
@@ -34,6 +35,8 @@ public class PValue implements ArgsConvertible {
     public int hashCode() {
         int result = ballotNumber.hashCode();
         result = 31 * result + slotId;
+        result = 31 * result + command.hashCode();
         return result;
     }
+
 }

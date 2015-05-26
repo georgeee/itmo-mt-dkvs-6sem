@@ -10,19 +10,19 @@ import java.net.Socket;
 class ServerSocketListener implements Runnable {
     private final static Logger log = LoggerFactory.getLogger(ServerSocketListener.class);
 
-    private final Node node;
+    private final ServerController server;
 
-    ServerSocketListener(Node node) {
-        this.node = node;
+    ServerSocketListener(ServerController server) {
+        this.server = server;
     }
 
     @Override
     public void run() {
         ServerSocket serverSocket;
         try {
-            serverSocket = new ServerSocket(node.getNodeConfiguration().getPort());
+            serverSocket = new ServerSocket(server.getNodeConfiguration().getPort());
         } catch (IOException e) {
-            log.error("Error opening socket on port " + node.getNodeConfiguration().getPort(), e);
+            log.error("Error opening socket on port " + server.getNodeConfiguration().getPort(), e);
             return;
         }
         while (true) {
@@ -34,15 +34,15 @@ class ServerSocketListener implements Runnable {
             try {
                 connectionSocket = serverSocket.accept();
             } catch (IOException e) {
-                log.error("Error while listening port " + node.getNodeConfiguration().getPort(), e);
+                log.error("Error while listening port " + server.getNodeConfiguration().getPort(), e);
             }
             if (connectionSocket != null) {
                 final Socket finalConnectionSocket = connectionSocket;
-                node.getConnectionManager().getReceiveListenersService().submit(new Runnable() {
+                server.getConnectionManager().getReceiveListenersService().submit(new Runnable() {
                     @Override
                     public void run() {
                         try {
-                            ConnectionHandler.handleConnection(node.getConnectionManager(), finalConnectionSocket).run();
+                            ConnectionHandler.handleConnection(server.getConnectionManager(), finalConnectionSocket).run();
                         } catch (IOException e) {
                             try {
                                 finalConnectionSocket.close();

@@ -3,7 +3,7 @@ package ru.georgeee.itmo.sem6.dkvs;
 import org.apache.commons.configuration.ConfigurationException;
 import ru.georgeee.itmo.sem6.dkvs.config.NodeConfiguration;
 import ru.georgeee.itmo.sem6.dkvs.config.SystemConfiguration;
-import ru.georgeee.itmo.sem6.dkvs.connectivity.Node;
+import ru.georgeee.itmo.sem6.dkvs.connectivity.ServerController;
 
 import java.io.File;
 
@@ -50,7 +50,7 @@ public class Main {
         if (nodeConfiguration == null) {
             throw new IllegalArgumentException("Unknown node " + id);
         }
-        Node node = new Node(configuration, nodeConfiguration);
-        node.start();
+        ServerController server = new ServerController(configuration, nodeConfiguration);
+        server.start();
     }
 }
