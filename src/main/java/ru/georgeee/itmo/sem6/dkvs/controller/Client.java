@@ -25,7 +25,7 @@ class Client extends AbstractInstance {
     public Client(ClientController controller) {
         super(controller);
         this.controller = controller;
-        this.leaders = controller.getConnectionManager().getSystemConfiguration().getDestinations(Role.LEADER);
+        this.leaders = controller.getSystemConfiguration().getDestinations(Role.LEADER);
         this.notResponded = new HashSet<>();
     }
 

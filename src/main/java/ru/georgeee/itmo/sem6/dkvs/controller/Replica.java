@@ -37,7 +37,7 @@ class Replica extends AbstractInstance {
 
     public Replica(AbstractController controller) {
         super(controller);
-        SystemConfiguration configuration = controller.getConnectionManager().getSystemConfiguration();
+        SystemConfiguration configuration = controller.getSystemConfiguration();
         commandQueue = new ArrayDeque<>();
         leaders = configuration.getDestinations(Role.LEADER);
         slotWindow = configuration.getPaxosSlotWindow();

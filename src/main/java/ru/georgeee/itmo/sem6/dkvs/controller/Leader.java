@@ -27,7 +27,7 @@ class Leader extends AbstractInstance {
 
     public Leader(AbstractController controller) {
         super(controller);
-        SystemConfiguration sysConfiguration = controller.getConnectionManager().getSystemConfiguration();
+        SystemConfiguration sysConfiguration = controller.getSystemConfiguration();
         ballotNumber = new BallotNumber(0, getSelfId());
         commanders = new HashMap<>();
         scouts = new HashMap<>();

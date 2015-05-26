@@ -21,21 +21,23 @@ import java.util.concurrent.ConcurrentMap;
 import static ru.georgeee.itmo.sem6.dkvs.msg.Message.Type.PING;
 import static ru.georgeee.itmo.sem6.dkvs.msg.Message.Type.PONG;
 
-abstract class AbstractController implements Controller{
+abstract class AbstractController implements Controller {
     private static final Logger log = LoggerFactory.getLogger(AbstractController.class);
     protected final ConcurrentMap<Message.Type, Consumer<Message>> consumers;
     @Getter(AccessLevel.PACKAGE)
-    private final ConnectionManager connectionManager;
+    private volatile ConnectionManager connectionManager;
+    @Getter
+    private final SystemConfiguration systemConfiguration;
     private final List<Thread> threads;
     private final PingPong pingPong;
     private final ConcurrentMap<Pair<Destination, String>, Runnable> onPongMap;
 
     public AbstractController(SystemConfiguration systemConfiguration) {
+        this.systemConfiguration = systemConfiguration;
         this.threads = new ArrayList<>();
-        this.connectionManager = new ConnectionManager(systemConfiguration, getSelfDestination(), new MessageConsumer());
         this.consumers = new ConcurrentHashMap<>();
         this.onPongMap = new ConcurrentHashMap<>();
-        pingPong = new PingPong(this);
+        this.pingPong = new PingPong(this);
         Utils.putBatch(consumers, pingPong, PING, PONG);
     }
 
@@ -43,6 +45,11 @@ abstract class AbstractController implements Controller{
 
     protected abstract String getId();
 
+    @Override
+    public void init() {
+        this.connectionManager = new ConnectionManager(systemConfiguration, getSelfDestination(), new MessageConsumer());
+        log.info("Controller {} initialized", getSelfDestination());
+    }
 
     @Override
     public void start() {

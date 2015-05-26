@@ -26,7 +26,7 @@ abstract class AbstractInstance implements Consumer<Message>, Runnable {
     private final int repeatTimeout;
 
     public AbstractInstance(AbstractController controller) {
-        SystemConfiguration sysConfiguration = controller.getConnectionManager().getSystemConfiguration();
+        SystemConfiguration sysConfiguration = controller.getSystemConfiguration();
         this.controller = controller;
         this.messageQueue = createBlockingQueue();
         this.repeatQueue = new ConcurrentLinkedQueue<>();

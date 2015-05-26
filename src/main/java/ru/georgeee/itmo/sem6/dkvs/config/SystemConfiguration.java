@@ -47,7 +47,7 @@ public class SystemConfiguration {
 
     public SystemConfiguration(Configuration configuration) {
         @SuppressWarnings("unchecked")
-        Iterator<String> keyIterator = configuration.getKeys("node.");
+        Iterator<String> keyIterator = configuration.getKeys("node");
         nodes = new HashMap<>();
         while (keyIterator.hasNext()) {
             String id = keyIterator.next().substring(NODE_PREFIX.length());

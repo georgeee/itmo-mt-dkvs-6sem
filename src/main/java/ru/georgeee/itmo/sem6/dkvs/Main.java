@@ -61,6 +61,7 @@ public class Main {
 
     private void launchClientInteractive() {
         ClientController controller = new ClientController(configuration);
+        controller.init();
         controller.start();
         listen(new ClientCliController(controller));
     }
@@ -71,6 +72,7 @@ public class Main {
             throw new IllegalArgumentException("Unknown node " + id);
         }
         ServerController controller = new ServerController(configuration, nodeConfiguration);
+        controller.init();
         controller.start();
         listen(new ServerCliController(controller));
     }
