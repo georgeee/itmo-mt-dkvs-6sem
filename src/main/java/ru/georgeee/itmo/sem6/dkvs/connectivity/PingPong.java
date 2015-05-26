@@ -10,9 +10,11 @@ import ru.georgeee.itmo.sem6.dkvs.msg.data.PongMessageData;
 
 class PingPong extends AbstractInstance {
     private static final Logger log = LoggerFactory.getLogger(PingPong.class);
+    private final AbstractController controller;
 
     public PingPong(AbstractController controller) {
         super(controller);
+        this.controller = controller;
     }
 
     @Override
@@ -34,9 +36,12 @@ class PingPong extends AbstractInstance {
     }
 
     private void processPong(PongMessageData msg) {
+        controller.processPong(msg.getSender(), msg.getToken());
     }
 
     private void processPing(PingMessageData msg) {
+        Message message = new PongMessageData(getSelfDestination(), msg.getToken()).createMessage();
+        send(message, msg.getSender());
     }
 
 

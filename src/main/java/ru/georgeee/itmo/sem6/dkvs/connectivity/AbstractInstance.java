@@ -52,7 +52,7 @@ abstract class AbstractInstance implements Consumer<Message>, Runnable {
         new RepeatingTask(predicate, task, commentary).run();
     }
 
-    protected void addForExecution(Runnable task){
+    protected void addForExecution(Runnable task) {
         new RepeatingTask(TRUE_PREDICATE, task, "").run();
     }
 
@@ -78,6 +78,10 @@ abstract class AbstractInstance implements Consumer<Message>, Runnable {
 
     protected String getSelfId() {
         return controller.getId();
+    }
+
+    public Destination getSelfDestination() {
+        return controller.getSelfDestination();
     }
 
     @Override
@@ -121,6 +125,7 @@ abstract class AbstractInstance implements Consumer<Message>, Runnable {
         private final Predicate predicate;
         private final Runnable runnable;
         private final String commentary;
+        private volatile boolean firstRun = true;
 
         private RepeatingTask(Predicate predicate, Runnable runnable, String commentary) {
             this.predicate = predicate;
@@ -134,6 +139,12 @@ abstract class AbstractInstance implements Consumer<Message>, Runnable {
         }
 
         public boolean doRepeat() {
+            if (firstRun) {
+                firstRun = false;
+                log.info("Executing for the first time task; {}", commentary);
+                runnable.run();
+                return false;
+            }
             if (!predicate.evaluate()) {
                 log.info("Predicate evaluated to false, repeating: {}", commentary);
                 runnable.run();

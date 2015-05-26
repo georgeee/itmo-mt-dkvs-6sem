@@ -10,10 +10,13 @@ public class PongMessageData extends AbstractMessageData {
     @Getter
     @ArgsField
     private final Destination sender;
+    @Getter @ArgsField
+    private final String token;
 
     @ArgsConstructor
-    public PongMessageData(Destination sender) {
+    public PongMessageData(Destination sender, String token) {
         this.sender = sender;
+        this.token = token;
     }
 
     @Override

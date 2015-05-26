@@ -10,10 +10,13 @@ public class PingMessageData extends AbstractMessageData {
     @Getter
     @ArgsField
     private final Destination sender;
+    @Getter @ArgsField
+    private final String token;
 
     @ArgsConstructor
-    public PingMessageData(Destination sender) {
+    public PingMessageData(Destination sender, String token) {
         this.sender = sender;
+        this.token = token;
     }
 
     @Override
