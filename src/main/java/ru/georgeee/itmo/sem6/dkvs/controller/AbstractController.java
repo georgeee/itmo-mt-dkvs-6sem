@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.georgeee.itmo.sem6.dkvs.Consumer;
 import ru.georgeee.itmo.sem6.dkvs.Destination;
-import ru.georgeee.itmo.sem6.dkvs.Utils;
+import ru.georgeee.itmo.sem6.dkvs.utils.Utils;
 import ru.georgeee.itmo.sem6.dkvs.config.SystemConfiguration;
 import ru.georgeee.itmo.sem6.dkvs.msg.Message;
 import ru.georgeee.itmo.sem6.dkvs.msg.data.PingMessageData;
@@ -57,6 +57,7 @@ abstract class AbstractController implements Controller {
             if (!threads.isEmpty()) {
                 throw new IllegalStateException("Already started");
             }
+            threads.add(new Thread(pingPong));
             createThreads(threads);
             for (Thread thread : threads) {
                 thread.start();
@@ -114,7 +115,11 @@ abstract class AbstractController implements Controller {
             log.info("Received message: {}", message);
             Consumer<Message> consumer = consumers.get(message.getType());
             if (consumer != null) {
-                consumer.consume(message);
+                try {
+                    consumer.consume(message);
+                } catch (Exception e) {
+                    log.error("Error while consuming message", e);
+                }
             } else {
                 log.error("No consumer registered for type {} (message: {})", message.getType(), message);
             }

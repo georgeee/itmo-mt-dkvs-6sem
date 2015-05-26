@@ -1,7 +1,7 @@
 package ru.georgeee.itmo.sem6.dkvs.msg;
 
 import lombok.Getter;
-import ru.georgeee.itmo.sem6.dkvs.Utils;
+import ru.georgeee.itmo.sem6.dkvs.utils.Utils;
 
 public class Message {
 

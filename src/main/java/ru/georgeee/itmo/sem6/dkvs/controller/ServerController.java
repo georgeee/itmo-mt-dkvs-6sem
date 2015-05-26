@@ -3,7 +3,7 @@ package ru.georgeee.itmo.sem6.dkvs.controller;
 import lombok.AccessLevel;
 import lombok.Getter;
 import ru.georgeee.itmo.sem6.dkvs.Destination;
-import ru.georgeee.itmo.sem6.dkvs.Utils;
+import ru.georgeee.itmo.sem6.dkvs.utils.Utils;
 import ru.georgeee.itmo.sem6.dkvs.config.NodeConfiguration;
 import ru.georgeee.itmo.sem6.dkvs.config.Role;
 import ru.georgeee.itmo.sem6.dkvs.config.SystemConfiguration;

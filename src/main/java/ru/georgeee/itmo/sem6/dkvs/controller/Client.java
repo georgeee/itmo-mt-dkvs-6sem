@@ -45,6 +45,7 @@ class Client extends AbstractInstance {
     }
 
     private void processResponse(ResponseMessageData msg) {
+        notResponded.remove(msg.getCommandId());
         controller.processResponse(msg.getCommandId(), msg.getOpResult());
     }
 

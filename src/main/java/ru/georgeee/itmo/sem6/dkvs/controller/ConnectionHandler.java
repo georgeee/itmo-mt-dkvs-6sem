@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.georgeee.itmo.sem6.dkvs.Destination;
 import ru.georgeee.itmo.sem6.dkvs.config.NodeConfiguration;
+import ru.georgeee.itmo.sem6.dkvs.msg.ArgsConverter;
 import ru.georgeee.itmo.sem6.dkvs.msg.Message;
 import ru.georgeee.itmo.sem6.dkvs.msg.MessageParsingException;
 
@@ -11,12 +12,9 @@ import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 class ConnectionHandler implements Runnable {
     private final static Logger log = LoggerFactory.getLogger(ConnectionHandler.class);
-    private static final Pattern IDENTITY_STRING_PATTERN = Pattern.compile("^\\s*(?:(client)|(node))\\s+(\\S+)\\s*$", Pattern.CASE_INSENSITIVE);
     private static final int IDENTITY_STRING_PATTERN_CLIENT_GROUP = 0;
     private static final int IDENTITY_STRING_PATTERN_NODE_GROUP = 1;
     private static final int IDENTITY_STRING_PATTERN_VALUE_GROUP = 2;
@@ -29,6 +27,7 @@ class ConnectionHandler implements Runnable {
 
 
     private ConnectionHandler(Socket socket, BufferedReader reader, BufferedWriter writer, Destination destination) throws IOException {
+        log.debug("Established connection with {}", destination);
         this.socket = socket;
         this.reader = reader;
         this.writer = writer;
@@ -46,16 +45,12 @@ class ConnectionHandler implements Runnable {
     private static Destination readIdentity(BufferedReader reader) throws IOException {
         String identityString = reader.readLine();
         if (identityString != null) {
-            Matcher matcher = IDENTITY_STRING_PATTERN.matcher(identityString);
-            if (matcher.find()) {
-                String id = matcher.group(IDENTITY_STRING_PATTERN_VALUE_GROUP);
-                if (matcher.group(IDENTITY_STRING_PATTERN_CLIENT_GROUP) != null) {
-                    return new Destination(Destination.Type.CLIENT, id);
-                } else if (matcher.group(IDENTITY_STRING_PATTERN_NODE_GROUP) != null) {
-                    return new Destination(Destination.Type.NODE, id);
-                }
+            try {
+                return ArgsConverter.parse(Destination.class, identityString);
+            } catch (RuntimeException e) {
+                log.error("Wrong identity string: " + identityString);
+                throw new IOException("Failed to retrieve identity string", e);
             }
-            log.error("Wrong identity string: {}", identityString);
         }
         throw new IOException("Failed to retrieve identity string");
     }
@@ -129,6 +124,7 @@ class ConnectionHandler implements Runnable {
     @Override
     public void run() {
         try {
+            log.debug("Started listening for {}", destination);
             while (!closed) {
                 if (Thread.interrupted()) {
                     Thread.currentThread().interrupt();
@@ -145,6 +141,7 @@ class ConnectionHandler implements Runnable {
                     log.error("Wrong message received: " + line, e);
                 }
             }
+            log.debug("Stopped listening for {}", destination);
         } catch (IOException e) {
             log.debug("I/O exception caught", e);
         }
@@ -169,7 +166,7 @@ class ConnectionHandler implements Runnable {
         if (!closed) {
             try {
                 closed = true;
-                log.info("Closing connection");
+                log.debug("Closing connection for {}", destination);
                 reader.close();
                 writer.close();
                 socket.close();

@@ -1,4 +1,4 @@
-package ru.georgeee.itmo.sem6.dkvs;
+package ru.georgeee.itmo.sem6.dkvs.utils;
 
 import java.util.Map;
 import java.util.regex.Pattern;

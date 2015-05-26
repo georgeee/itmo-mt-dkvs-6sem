@@ -10,19 +10,19 @@ import java.net.Socket;
 class ServerSocketListener implements Runnable {
     private final static Logger log = LoggerFactory.getLogger(ServerSocketListener.class);
 
-    private final ServerController server;
+    private final ServerController controller;
 
-    ServerSocketListener(ServerController server) {
-        this.server = server;
+    ServerSocketListener(ServerController controller) {
+        this.controller = controller;
     }
 
     @Override
     public void run() {
         ServerSocket serverSocket;
         try {
-            serverSocket = new ServerSocket(server.getNodeConfiguration().getPort());
+            serverSocket = new ServerSocket(controller.getNodeConfiguration().getPort());
         } catch (IOException e) {
-            log.error("Error opening socket on port " + server.getNodeConfiguration().getPort(), e);
+            log.error("Error opening socket on port " + controller.getNodeConfiguration().getPort(), e);
             return;
         }
         while (true) {
@@ -34,15 +34,17 @@ class ServerSocketListener implements Runnable {
             try {
                 connectionSocket = serverSocket.accept();
             } catch (IOException e) {
-                log.error("Error while listening port " + server.getNodeConfiguration().getPort(), e);
+                log.error("Error while listening port " + controller.getNodeConfiguration().getPort(), e);
             }
             if (connectionSocket != null) {
+                log.debug("Received socket connection");
                 final Socket finalConnectionSocket = connectionSocket;
-                server.getConnectionManager().getReceiveListenersService().submit(new Runnable() {
+                controller.getConnectionManager().getReceiveListenersService().submit(new Runnable() {
                     @Override
                     public void run() {
+                        log.debug("Handling socket connection");
                         try {
-                            ConnectionHandler.handleConnection(server.getConnectionManager(), finalConnectionSocket).run();
+                            ConnectionHandler.handleConnection(controller.getConnectionManager(), finalConnectionSocket).run();
                         } catch (IOException e) {
                             try {
                                 finalConnectionSocket.close();

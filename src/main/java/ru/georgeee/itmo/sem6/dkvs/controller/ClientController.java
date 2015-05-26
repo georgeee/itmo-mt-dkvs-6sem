@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.georgeee.itmo.sem6.dkvs.Destination;
 import ru.georgeee.itmo.sem6.dkvs.OpResultHandler;
-import ru.georgeee.itmo.sem6.dkvs.Utils;
+import ru.georgeee.itmo.sem6.dkvs.utils.Utils;
 import ru.georgeee.itmo.sem6.dkvs.config.SystemConfiguration;
 import ru.georgeee.itmo.sem6.dkvs.msg.Op;
 import ru.georgeee.itmo.sem6.dkvs.msg.OpResult;

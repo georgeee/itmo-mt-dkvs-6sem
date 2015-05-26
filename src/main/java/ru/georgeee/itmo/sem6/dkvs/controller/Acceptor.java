@@ -46,7 +46,7 @@ class Acceptor extends AbstractInstance {
 
     private void process(P1aMessageData p1aData) {
         BallotNumber b = p1aData.getBallotNumber();
-        if (b.compareTo(ballotNumber) > 0) {
+        if (ballotNumber == null || b.compareTo(ballotNumber) > 0) {
             ballotNumber = b;
         }
         //Executing non-repeating, cause we have no condition to check

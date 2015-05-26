@@ -42,7 +42,7 @@ public class Op implements ArgsConvertibleExtended {
 
     public static Pair<Op, Integer> parseFromArgs(String[] args, int i) throws MessageParsingException {
         try {
-            Type type = Type.valueOf(args[i++]);
+            Type type = Type.valueOf(args[i++].toUpperCase());
             String key = null, value = null;
             switch (type) {
                 case DELETE:

@@ -6,8 +6,8 @@ import ru.georgeee.itmo.sem6.dkvs.Consumer;
 import ru.georgeee.itmo.sem6.dkvs.Destination;
 import ru.georgeee.itmo.sem6.dkvs.config.SystemConfiguration;
 import ru.georgeee.itmo.sem6.dkvs.msg.Message;
+import ru.georgeee.itmo.sem6.dkvs.utils.Either;
 
-import java.util.Queue;
 import java.util.concurrent.*;
 
 abstract class AbstractInstance implements Consumer<Message>, Runnable {
@@ -19,8 +19,7 @@ abstract class AbstractInstance implements Consumer<Message>, Runnable {
     };
     private static final Logger log = LoggerFactory.getLogger(AbstractInstance.class);
     private static final int QUEUE_CAPACITY = 1000;
-    protected final BlockingQueue<Message> messageQueue;
-    protected final Queue<RepeatingTask> repeatQueue;
+    protected final BlockingQueue<Either<Message, RepeatingTask>> queue;
     private final AbstractController controller;
     private final ScheduledExecutorService repeatService;
     private final int repeatTimeout;
@@ -28,8 +27,7 @@ abstract class AbstractInstance implements Consumer<Message>, Runnable {
     public AbstractInstance(AbstractController controller) {
         SystemConfiguration sysConfiguration = controller.getSystemConfiguration();
         this.controller = controller;
-        this.messageQueue = createBlockingQueue();
-        this.repeatQueue = new ConcurrentLinkedQueue<>();
+        this.queue = createBlockingQueue();
         this.repeatService = Executors.newScheduledThreadPool(sysConfiguration.getInstanceRepeatPoolSize());
         this.repeatTimeout = sysConfiguration.getInstanceRepeatTimeout();
     }
@@ -59,11 +57,11 @@ abstract class AbstractInstance implements Consumer<Message>, Runnable {
     /**
      * Consumes object (immediately)
      *
-     * @throws java.lang.IllegalStateException if messageQueue is full
+     * @throws java.lang.IllegalStateException if queue is full
      */
     @Override
     public void consume(Message t) {
-        this.messageQueue.add(t);
+        this.queue.add(new Either.Left<Message, RepeatingTask>(t));
     }
 
     protected abstract void consumeImpl(Message t);
@@ -91,14 +89,17 @@ abstract class AbstractInstance implements Consumer<Message>, Runnable {
                 Thread.currentThread().interrupt();
                 break;
             }
-            processRepeats();
             try {
-                Message message = null;
+                Either<Message, RepeatingTask> either = null;
                 try {
-                    message = messageQueue.take();
-                    consumeImpl(message);
+                    either = queue.take();
+                    if (either instanceof Either.Left) {
+                        consumeImpl(either.getLeft());
+                    } else {
+                        processRepeat(either.getRight());
+                    }
                 } catch (RuntimeException e) {
-                    log.error("Error occurred consuming message " + message + " by " + this.getClass(), e);
+                    log.error("Error occurred consuming " + either + " by " + this.getClass(), e);
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -107,13 +108,10 @@ abstract class AbstractInstance implements Consumer<Message>, Runnable {
         }
     }
 
-    private void processRepeats() {
-        RepeatingTask task;
-        while ((task = repeatQueue.poll()) != null) {
-            boolean needRepeat = task.doRepeat();
-            if (needRepeat) {
-                repeatService.schedule(task, repeatTimeout, TimeUnit.MILLISECONDS);
-            }
+    private void processRepeat(RepeatingTask task) {
+        boolean needRepeat = task.doRepeat();
+        if (needRepeat) {
+            repeatService.schedule(task, repeatTimeout, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -135,7 +133,7 @@ abstract class AbstractInstance implements Consumer<Message>, Runnable {
 
         @Override
         public void run() {
-            repeatQueue.add(this);
+            queue.add(new Either.Right<Message, RepeatingTask>(this));
         }
 
         public boolean doRepeat() {
@@ -143,7 +141,7 @@ abstract class AbstractInstance implements Consumer<Message>, Runnable {
                 firstRun = false;
                 log.info("Executing for the first time task; {}", commentary);
                 runnable.run();
-                return false;
+                return true;
             }
             if (!predicate.evaluate()) {
                 log.info("Predicate evaluated to false, repeating: {}", commentary);

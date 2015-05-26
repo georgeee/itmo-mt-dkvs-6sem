@@ -1,7 +1,9 @@
 package ru.georgeee.itmo.sem6.dkvs.msg;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import ru.georgeee.itmo.sem6.dkvs.utils.Utils;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -13,9 +15,17 @@ public class ArgsConverter {
     /**
      * @throws java.lang.RuntimeException in case of any error
      */
+    public static <T extends ArgsConvertible> T parse(Class<T> clazz, String line) {
+        return parse(clazz, Utils.splitToArgs(line), 0);
+    }
+
+    /**
+     * @throws java.lang.RuntimeException in case of any error
+     */
     public static <T extends ArgsConvertible> T parse(Class<T> clazz, String[] args) {
         return parse(clazz, args, 0);
     }
+
     public static <T extends ArgsConvertible> T parse(Class<T> clazz, String[] args, int i) {
         return (T) parseImpl(clazz, args, i).getLeft();
     }
@@ -52,7 +62,7 @@ public class ArgsConverter {
                     constructorArguments.add(args[i++]);
                 } else if (Enum.class.isAssignableFrom(field.getType())) {
                     Class<? extends Enum> fieldClass = (Class<? extends Enum>) field.getType();
-                    constructorArguments.add(Enum.valueOf(fieldClass, args[i++]));
+                    constructorArguments.add(Enum.valueOf(fieldClass, args[i++].toUpperCase()));
                 } else if (ArgsConvertible.class.isAssignableFrom(field.getType())) {
                     Pair<ArgsConvertible, Integer> pair = parseImpl(field.getType(), args, i);
                     i = pair.getRight();
@@ -103,7 +113,7 @@ public class ArgsConverter {
 
     private static List<Field> getArgsFields(Class clazz) {
         List<Field> fields = new ArrayList<>();
-        for (Field field : clazz.getFields()) {
+        for (Field field : clazz.getDeclaredFields()) {
             if (field.isAnnotationPresent(ArgsField.class)) {
                 fields.add(field);
             }
@@ -114,7 +124,7 @@ public class ArgsConverter {
     private static Object getValue(ArgsConvertible data, Field field) {
         Class clazz = data.getClass();
         try {
-            Method getter = clazz.getMethod("get" + field.getName());
+            Method getter = clazz.getMethod("get" + StringUtils.capitalize(field.getName()));
             return getter.invoke(data);
         } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
         }
@@ -130,7 +140,9 @@ public class ArgsConverter {
         addToArgs(data, args);
         String[] result = new String[args.size()];
         for (int i = 0; i < args.size(); ++i) {
-            result[i] = args.get(i).toString();
+            if (args.get(i) != null) {
+                result[i] = args.get(i).toString();
+            }
         }
         return result;
     }

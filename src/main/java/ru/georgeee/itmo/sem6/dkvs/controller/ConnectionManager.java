@@ -42,14 +42,14 @@ class ConnectionManager {
     private void send(SendTask task) {
         int counter = task.counter;
         if (counter > systemConfiguration.getMessageRetry()) {
-            log.warn("Retry count exceed for message {}", task.message);
+            log.warn("Retry count exceed for message to {} (message: {})", task.destination, task.message);
         } else {
             task.incCounter();
             if (counter == 0) {
-                log.info("Sending message: {}", task.message);
+                log.info("Sending message to {}: {}", task.destination, task.message);
                 sendExecutor.submit(task);
             } else {
-                log.info("Retrying sending message ({}): {}", counter, task.message);
+                log.info("Retrying sending message ({}) to {} (message: {})", counter, task.destination, task.message);
                 sendExecutor.schedule(task, counter * systemConfiguration.getMessageRetryTimeout(), TimeUnit.MILLISECONDS);
             }
         }
@@ -87,12 +87,12 @@ class ConnectionManager {
                 }
             }
             if (connectionHandler != null) {
-                log.debug("Trying to perform send for {}", message);
+                log.debug("Trying to perform send to {} (message: {})", destination, message);
                 boolean isSent = connectionHandler.trySend(message);
                 if (isSent) {
-                    log.debug("Successfully performed send for {}", message);
+                    log.debug("Successfully performed send to {} (message: {})", destination, message);
                 } else {
-                    log.debug("Failed to perform send for {}, putting for retry", message);
+                    log.debug("Failed to perform send to {} (message: {}), putting for retry", destination, message);
                     send(this);
                 }
             }
