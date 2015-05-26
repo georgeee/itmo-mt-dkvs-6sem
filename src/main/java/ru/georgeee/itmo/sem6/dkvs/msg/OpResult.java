@@ -58,6 +58,15 @@ public class OpResult implements ArgsConvertibleExtended {
     }
 
     @Override
+    public String toString() {
+        return "OpResult{" +
+                "type=" + type +
+                ", key='" + key + '\'' +
+                ", value='" + value + '\'' +
+                '}';
+    }
+
+    @Override
     public void addToArgs(List<Object> args) {
         args.add(type);
         if (key != null) {

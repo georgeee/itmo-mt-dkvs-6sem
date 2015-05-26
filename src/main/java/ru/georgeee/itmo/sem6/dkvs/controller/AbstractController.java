@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentMap;
 import static ru.georgeee.itmo.sem6.dkvs.msg.Message.Type.PING;
 import static ru.georgeee.itmo.sem6.dkvs.msg.Message.Type.PONG;
 
-abstract class AbstractController {
+abstract class AbstractController implements Controller{
     private static final Logger log = LoggerFactory.getLogger(AbstractController.class);
     protected final ConcurrentMap<Message.Type, Consumer<Message>> consumers;
     @Getter(AccessLevel.PACKAGE)
@@ -44,6 +44,7 @@ abstract class AbstractController {
     protected abstract String getId();
 
 
+    @Override
     public void start() {
         synchronized (threads) {
             if (!threads.isEmpty()) {
@@ -68,6 +69,7 @@ abstract class AbstractController {
      */
     protected abstract void createThreads(List<Thread> threads);
 
+    @Override
     public void stop() {
         synchronized (threads) {
             for (Thread thread : threads) {
@@ -82,6 +84,7 @@ abstract class AbstractController {
         connectionManager.send(message, destination);
     }
 
+    @Override
     public void ping(Destination destination, String token, Runnable onPong) {
         if (Utils.containsWhitespace(token)) {
             throw new IllegalArgumentException("Token shouldn't contain whitespace");

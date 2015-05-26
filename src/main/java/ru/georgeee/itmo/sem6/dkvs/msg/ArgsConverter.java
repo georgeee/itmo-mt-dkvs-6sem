@@ -14,7 +14,10 @@ public class ArgsConverter {
      * @throws java.lang.RuntimeException in case of any error
      */
     public static <T extends ArgsConvertible> T parse(Class<T> clazz, String[] args) {
-        return (T) parseImpl(clazz, args, 0).getLeft();
+        return parse(clazz, args, 0);
+    }
+    public static <T extends ArgsConvertible> T parse(Class<T> clazz, String[] args, int i) {
+        return (T) parseImpl(clazz, args, i).getLeft();
     }
 
     public static <T extends ArgsConvertible> T parse(Class<T> clazz, Message message) throws MessageParsingException {

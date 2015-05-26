@@ -12,8 +12,12 @@ public class Utils {
     }
 
     private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s");
+
     public static boolean containsWhitespace(String s) {
         return WHITESPACE_PATTERN.matcher(s).find();
     }
 
+    public static String[] splitToArgs(String line) {
+        return line.trim().split("\\s+");
+    }
 }

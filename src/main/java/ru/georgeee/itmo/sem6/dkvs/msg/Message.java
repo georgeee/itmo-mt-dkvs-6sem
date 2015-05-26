@@ -1,6 +1,7 @@
 package ru.georgeee.itmo.sem6.dkvs.msg;
 
 import lombok.Getter;
+import ru.georgeee.itmo.sem6.dkvs.Utils;
 
 public class Message {
 
@@ -16,7 +17,7 @@ public class Message {
     }
 
     public static Message parseMessage(String line) throws MessageParsingException {
-        String[] fullArgs = line.trim().split("\\s+");
+        String[] fullArgs = Utils.splitToArgs(line);
         String[] args = new String[fullArgs.length - 1];
         System.arraycopy(fullArgs, 1, args, 0, args.length);
         return new Message(parseType(fullArgs[0]), args);

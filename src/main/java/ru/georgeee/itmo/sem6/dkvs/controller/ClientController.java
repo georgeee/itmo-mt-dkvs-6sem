@@ -24,7 +24,7 @@ public class ClientController extends AbstractController {
     private final AtomicInteger commandIdCounter;
     private final ConcurrentMap<Integer, OpResultHandler> opResultHandlers;
 
-    public ClientController(SystemConfiguration systemConfiguration, String id) {
+    public ClientController(SystemConfiguration systemConfiguration) {
         super(systemConfiguration);
         this.commandIdCounter = new AtomicInteger();
         this.id = UUID.randomUUID().toString();
