@@ -41,7 +41,7 @@ public class Command implements ArgsConvertible {
 
     @Override
     public String toString() {
-        return "Command{" +
+        return "{" +
                 "clientId='" + clientId + '\'' +
                 ", commandId=" + commandId +
                 ", op=" + op +

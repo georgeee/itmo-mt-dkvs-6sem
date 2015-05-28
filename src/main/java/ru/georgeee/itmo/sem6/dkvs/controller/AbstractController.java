@@ -4,14 +4,16 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.log4j.MDC;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.georgeee.itmo.sem6.dkvs.Consumer;
+import ru.georgeee.itmo.sem6.dkvs.Consumer2;
 import ru.georgeee.itmo.sem6.dkvs.Destination;
-import ru.georgeee.itmo.sem6.dkvs.utils.Utils;
 import ru.georgeee.itmo.sem6.dkvs.config.SystemConfiguration;
 import ru.georgeee.itmo.sem6.dkvs.msg.Message;
 import ru.georgeee.itmo.sem6.dkvs.msg.data.PingMessageData;
+import ru.georgeee.itmo.sem6.dkvs.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +25,7 @@ import static ru.georgeee.itmo.sem6.dkvs.msg.Message.Type.PONG;
 
 abstract class AbstractController implements Controller {
     private static final Logger log = LoggerFactory.getLogger(AbstractController.class);
+    private static final String MDC_NODE_NAME = "nodeName";
     protected final ConcurrentMap<Message.Type, Consumer<Message>> consumers;
     @Getter(AccessLevel.PACKAGE)
     private volatile ConnectionManager connectionManager;
@@ -45,14 +48,19 @@ abstract class AbstractController implements Controller {
 
     protected abstract String getId();
 
-    @Override
-    public void init() {
-        this.connectionManager = new ConnectionManager(systemConfiguration, getSelfDestination(), new MessageConsumer());
-        log.info("Controller {} initialized", getSelfDestination());
+    private synchronized void initConnectionManager() {
+        if (connectionManager == null) {
+            this.connectionManager = new ConnectionManager(systemConfiguration, getSelfDestination(), new MessageConsumer());
+            log.debug("Connection manager for controller {} initialized", getSelfDestination());
+        }
     }
 
     @Override
     public void start() {
+        MDC.put(MDC_NODE_NAME, getDestinationType() + " " + getId());
+        if (connectionManager == null) {
+            initConnectionManager();
+        }
         synchronized (threads) {
             if (!threads.isEmpty()) {
                 throw new IllegalStateException("Already started");
@@ -85,6 +93,7 @@ abstract class AbstractController implements Controller {
             }
             threads.clear();
         }
+        MDC.remove(MDC_NODE_NAME);
     }
 
     protected void sendPing(Destination destination, String token) {
@@ -109,10 +118,10 @@ abstract class AbstractController implements Controller {
     }
 
 
-    private class MessageConsumer implements Consumer<Message> {
+    private class MessageConsumer implements Consumer2<Message, Destination> {
         @Override
-        public void consume(Message message) {
-            log.info("Received message: {}", message);
+        public void consume(Message message, Destination destination) {
+            log.info("Received message from {}: {}", destination, message);
             Consumer<Message> consumer = consumers.get(message.getType());
             if (consumer != null) {
                 try {

@@ -4,10 +4,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.georgeee.itmo.sem6.dkvs.Destination;
 import ru.georgeee.itmo.sem6.dkvs.OpResultHandler;
-import ru.georgeee.itmo.sem6.dkvs.utils.Utils;
 import ru.georgeee.itmo.sem6.dkvs.config.SystemConfiguration;
 import ru.georgeee.itmo.sem6.dkvs.msg.Op;
 import ru.georgeee.itmo.sem6.dkvs.msg.OpResult;
+import ru.georgeee.itmo.sem6.dkvs.utils.Utils;
 
 import java.util.List;
 import java.util.UUID;
@@ -27,7 +27,7 @@ public class ClientController extends AbstractController {
     public ClientController(SystemConfiguration systemConfiguration) {
         super(systemConfiguration);
         this.commandIdCounter = new AtomicInteger();
-        this.id = UUID.randomUUID().toString();
+        this.id = UUID.randomUUID().toString().substring(0, 6);
         this.client = new Client(this);
         Utils.putBatch(consumers, client, RESPONSE);
         opResultHandlers = new ConcurrentHashMap<>();

@@ -1,5 +1,6 @@
 package ru.georgeee.itmo.sem6.dkvs.msg;
 
+import org.apache.commons.lang.NullArgumentException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -45,7 +46,7 @@ public class ArgsConverter {
             return (Pair<T, Integer>) method.invoke(null, args, i);
         } catch (NoSuchMethodException e) {
         } catch (InvocationTargetException | IllegalAccessException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error invoking parseFromArgs", e);
         }
         try {
             List<Object> constructorArguments = new ArrayList<>();
@@ -122,6 +123,9 @@ public class ArgsConverter {
     }
 
     private static Object getValue(ArgsConvertible data, Field field) {
+        if (data == null) {
+            throw new NullArgumentException("data");
+        }
         Class clazz = data.getClass();
         try {
             Method getter = clazz.getMethod("get" + StringUtils.capitalize(field.getName()));
@@ -131,8 +135,8 @@ public class ArgsConverter {
         try {
             return field.get(data);
         } catch (IllegalAccessException e1) {
+            throw new IllegalArgumentException(String.format("Can't get value of field %s for class %s", field, data.getClass()));
         }
-        return null;
     }
 
     public static String[] getArgs(ArgsConvertible data) {
@@ -147,55 +151,41 @@ public class ArgsConverter {
         return result;
     }
 
-    private static void addObjectToArgs(Object object, List<Object> args) {
-        if (object instanceof ArgsConvertible) {
-            addToArgs((ArgsConvertible) object, args);
-        } else if (object instanceof Enum) {
+    private static void addObjectToArgs(Object object, List<Object> args, Field field) {
+        if (object instanceof Enum) {
             args.add(((Enum) object).name());
+        } else if (object instanceof ArgsConvertible) {
+            addToArgs((ArgsConvertible) object, args);
+        } else if (object instanceof Map && field != null && field.isAnnotationPresent(ArgsCollectionField.class)) {
+            ArgsMapField mapField = field.getAnnotation(ArgsMapField.class);
+            Map map = (Map) object;
+            Set<Map.Entry> entries = map.entrySet();
+            for (Map.Entry entry : entries) {
+                addObjectToArgs(entry.getKey(), args);
+                addObjectToArgs(entry.getValue(), args);
+            }
+        } else if (object instanceof Collection && field != null && field.isAnnotationPresent(ArgsCollectionField.class)) {
+            ArgsCollectionField collectionField = field.getAnnotation(ArgsCollectionField.class);
+            Collection collection = (Collection) object;
+            for (Object element : collection) {
+                addObjectToArgs(element, args);
+            }
         } else {
             args.add(object);
         }
+    }
+
+    private static void addObjectToArgs(Object object, List<Object> args) {
+        addObjectToArgs(object, args, null);
     }
 
     private static void addToArgs(ArgsConvertible data, List<Object> args) {
         Class clazz = data.getClass();
         if (data instanceof ArgsConvertibleExtended) {
             ((ArgsConvertibleExtended) data).addToArgs(args);
-        }
-        for (Field field : getArgsFields(clazz)) {
-            if (field.getType().isPrimitive()) {
-                if (field.getType() == int.class) {
-                    args.add(getValue(data, field));
-                } else {
-                    throw new UnsupportedOperationException("Doesn't support type: " + field.getType());
-                }
-            } else if (Enum.class.isAssignableFrom(field.getType())) {
-                args.add(((Enum) getValue(data, field)).name());
-            } else if (ArgsConvertible.class.isAssignableFrom(field.getType())) {
-                addToArgs((ArgsConvertible) getValue(data, field), args);
-            } else if (Map.class.isAssignableFrom(field.getType())) {
-                if (field.isAnnotationPresent(ArgsCollectionField.class)) {
-                    ArgsMapField mapField = field.getAnnotation(ArgsMapField.class);
-                    Class keyType = mapField.key();
-                    Class valueType = mapField.value();
-                    Map map = (Map) getValue(data, field);
-                    Set<Map.Entry> entries = map.entrySet();
-                    for (Map.Entry entry : entries) {
-                        addObjectToArgs(entry.getKey(), args);
-                        addObjectToArgs(entry.getValue(), args);
-                    }
-                }
-            } else if (Collection.class.isAssignableFrom(field.getType())) {
-                if (field.isAnnotationPresent(ArgsCollectionField.class)) {
-                    ArgsCollectionField collectionField = field.getAnnotation(ArgsCollectionField.class);
-                    Class elementType = collectionField.element();
-                    Collection collection = (Collection) getValue(data, field);
-                    for (Object element : collection) {
-                        addObjectToArgs(element, args);
-                    }
-                }
-            } else {
-                args.add(getValue(data, field));
+        } else {
+            for (Field field : getArgsFields(clazz)) {
+                addObjectToArgs(getValue(data, field), args, field);
             }
         }
     }

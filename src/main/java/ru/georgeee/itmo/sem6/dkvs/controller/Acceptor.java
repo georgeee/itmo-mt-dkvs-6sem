@@ -44,15 +44,16 @@ class Acceptor extends AbstractInstance {
         }
     }
 
-    private void process(P1aMessageData p1aData) {
-        BallotNumber b = p1aData.getBallotNumber();
+    private void process(P1aMessageData msg) {
+        BallotNumber b = msg.getBallotNumber();
+//        log.info("P1A received from leader {} with ballot {} (current ballot {})", msg.getLeaderId(), b, ballotNumber);
         if (ballotNumber == null || b.compareTo(ballotNumber) > 0) {
             ballotNumber = b;
         }
         //Executing non-repeating, cause we have no condition to check
         //Which is expected, assuming that acceptor is kind of memory
-        Message message = new P1bMessageData(getSelfId(), ballotNumber, p1aData.getScoutId(), accepted).createMessage();
-        sendToNode(message, p1aData.getLeaderId());
+        Message message = new P1bMessageData(getSelfId(), ballotNumber, msg.getScoutId(), accepted).createMessage();
+        sendToNode(message, msg.getLeaderId());
     }
 
     private void process(P2aMessageData p2aData) {

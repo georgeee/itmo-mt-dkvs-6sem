@@ -22,6 +22,7 @@ class Leader extends AbstractInstance {
     private int nextScoutId;
     final Map<Integer, Commander> commanders;
     final Map<Integer, Scout> scouts;
+
     private final Map<Integer, Command> decisionsCache;
     private final List<Destination> replicas;
     final List<Destination> acceptors;
@@ -39,7 +40,7 @@ class Leader extends AbstractInstance {
         addForExecution(new Runnable() {
             @Override
             public void run() {
-                spawnScout(ballotNumber);
+                spawnScout();
             }
         });
     }
@@ -90,20 +91,30 @@ class Leader extends AbstractInstance {
     }
 
     void reportPreempted(BallotNumber b2) {
+        log.info("PREEMPTED ballotNumber={} (current ballotNumber={})", b2, ballotNumber);
         if (b2.compareTo(ballotNumber) > 0) {
             active = false;
             ballotNumber = new BallotNumber(b2.getBallotId() + 1, getSelfId());
-            spawnScout(ballotNumber);
+            spawnScout();
+        } else {
+            log.error("Corrupt PREEMPTED: received {} <= {}", b2, ballotNumber);
         }
     }
 
-    void reportAdopted(BallotNumber b, Set<PValue> pValues) {
-        proposals.putAll(getPMax(pValues));
-        for (Map.Entry<Integer, Command> entry : proposals.entrySet()) {
-            //@TODO not sure, which ballot number should be used here
-            spawnCommander(new PValue(b, entry.getKey(), entry.getValue()));
+    void reportAdopted(BallotNumber b2, Set<PValue> pValues) {
+        log.info("ADOPTED ballotNumber={} pValues={} (current ballotNumber={})", b2, pValues, ballotNumber);
+        int compareResult = b2.compareTo(ballotNumber);
+        if (compareResult > 0) {
+            log.info("Ignoring ADOPTED: received {} > current {}", b2, ballotNumber);
+        } else if (compareResult == 0) {
+            proposals.putAll(getPMax(pValues));
+            for (Map.Entry<Integer, Command> entry : proposals.entrySet()) {
+                spawnCommander(new PValue(ballotNumber, entry.getKey(), entry.getValue()));
+            }
+            active = true;
+        } else {
+            log.error("Corrupt ADOPTED: received {} < current {}", b2, ballotNumber);
         }
-        active = true;
     }
 
     private Map<Integer, Command> getPMax(Set<PValue> pValues) {
@@ -138,15 +149,15 @@ class Leader extends AbstractInstance {
         commander.init();
     }
 
-    private void spawnScout(BallotNumber ballotNumber) {
-        if (scouts.containsKey(ballotNumber.getBallotId())) {
-            log.error("Scout for ballot {} is already spawned", ballotNumber);
-        } else {
-            int scoutId = nextScoutId++;
-            Scout scout = new Scout(this, scoutId, ballotNumber);
-            scouts.put(scoutId, scout);
-            scout.init();
-        }
+    /**
+     * Spawns a scout for current ballot number
+     * Method is called only in two places, right after new ballot is created
+     */
+    private void spawnScout() {
+        int scoutId = nextScoutId++;
+        Scout scout = new Scout(this, scoutId, ballotNumber);
+        scouts.put(scoutId, scout);
+        scout.init();
     }
 
     void registerDecision(int slotId, Command command) {
@@ -158,4 +169,11 @@ class Leader extends AbstractInstance {
     }
 
 
+    public void unregister(Commander commander) {
+        commanders.remove(commander.getCommanderId());
+    }
+
+    public void unregister(Scout scout) {
+        scouts.remove(scout.getScoutId());
+    }
 }

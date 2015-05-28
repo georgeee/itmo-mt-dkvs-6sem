@@ -136,7 +136,7 @@ class ConnectionHandler implements Runnable {
                 }
                 try {
                     Message message = Message.parseMessage(line);
-                    connectionManager.getConsumer().consume(message);
+                    connectionManager.getConsumer().consume(message, destination);
                 } catch (MessageParsingException e) {
                     log.error("Wrong message received: " + line, e);
                 }

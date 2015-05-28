@@ -1,5 +1,6 @@
 package ru.georgeee.itmo.sem6.dkvs.controller;
 
+import lombok.Getter;
 import ru.georgeee.itmo.sem6.dkvs.Consumer;
 import ru.georgeee.itmo.sem6.dkvs.msg.BallotNumber;
 import ru.georgeee.itmo.sem6.dkvs.msg.Message;
@@ -9,6 +10,7 @@ import ru.georgeee.itmo.sem6.dkvs.msg.data.P2bMessageData;
 
 class Commander extends MajorityWaiter implements Consumer<P2bMessageData> {
     private final Leader leader;
+    @Getter
     private final int commanderId;
     private final BallotNumber b;
     private final PValue pValue;
@@ -39,8 +41,8 @@ class Commander extends MajorityWaiter implements Consumer<P2bMessageData> {
     }
 
     private void unregister() {
+        leader.unregister(this);
         stop();
-        leader.commanders.remove(commanderId);
     }
 
 

@@ -1,5 +1,6 @@
 package ru.georgeee.itmo.sem6.dkvs.controller;
 
+import lombok.Getter;
 import ru.georgeee.itmo.sem6.dkvs.Consumer;
 import ru.georgeee.itmo.sem6.dkvs.msg.BallotNumber;
 import ru.georgeee.itmo.sem6.dkvs.msg.Message;
@@ -12,6 +13,7 @@ import java.util.Set;
 
 class Scout extends MajorityWaiter implements Consumer<P1bMessageData> {
     private final Leader leader;
+    @Getter
     private final int scoutId;
     private final BallotNumber b;
     private final Set<PValue> pValues;
@@ -42,8 +44,8 @@ class Scout extends MajorityWaiter implements Consumer<P1bMessageData> {
     }
 
     private void unregister() {
+        leader.unregister(this);
         stop();
-        leader.scouts.remove(b.getBallotId());
     }
 
     @Override

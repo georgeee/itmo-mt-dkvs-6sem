@@ -26,9 +26,8 @@ class Replica extends AbstractInstance {
     private final Map<Command, CommandState> commandStates;
     private final Map<Command, OpResult> commandResults;
     private final List<Destination> leaders;
-    //@TODO rewrite: most of the space will be filled with nulls
-    private final List<Command> decisions;
-    private final List<Command> proposals;
+    private final Map<Integer, Command> decisions;
+    private final Map<Integer, Command> proposals;
     //How much slots we can keep undecided
     private final int slotWindow;
     //
@@ -41,21 +40,11 @@ class Replica extends AbstractInstance {
         commandQueue = new ArrayDeque<>();
         leaders = configuration.getDestinations(Role.LEADER);
         slotWindow = configuration.getPaxosSlotWindow();
-        proposals = new ArrayList<>();
-        decisions = new ArrayList<>();
+        proposals = new HashMap<>();
+        decisions = new HashMap<>();
         commandStates = new HashMap<>();
         stateHolder = new StateHolderImpl();
         commandResults = new HashMap<>();
-        enlargeSlotSets(slotIn);
-    }
-
-    private void enlargeSlotSets(int slotIndex) {
-        while (decisions.size() < slotIndex + 1) {
-            decisions.add(null);
-        }
-        while (proposals.size() < slotIndex + 1) {
-            proposals.add(null);
-        }
     }
 
     private void propose() {
@@ -63,7 +52,7 @@ class Replica extends AbstractInstance {
             if (decisions.get(slotIn) == null) {
                 Command command = commandQueue.poll();
                 final Message message = new ProposeMessageData(slotIn, command, getSelfId()).createMessage();
-                proposals.set(slotIn, command);
+                proposals.put(slotIn, command);
                 setState(command, CommandState.PROPOSED);
                 executeRepeating(new IsDecidedPredicate(slotIn), new Runnable() {
                     @Override
@@ -75,7 +64,6 @@ class Replica extends AbstractInstance {
                 }, "waiting for decision for slot " + slotIn);
             }
             ++slotIn;
-            enlargeSlotSets(slotIn);
         }
     }
 
@@ -139,16 +127,15 @@ class Replica extends AbstractInstance {
     private void process(DecisionMessageData decisionData) {
         Command command = decisionData.getCommand();
         int slotId = decisionData.getSlotId();
-        enlargeSlotSets(slotId);
         Command prevDecision = decisions.get(slotId);
         if (prevDecision != null && !prevDecision.equals(command)) {
             log.error("Two distinct decisions for slot {}: {}, {}", slotId, prevDecision, command);
         }
-        decisions.set(slotId, command);
+        decisions.put(slotId, command);
         while (decisions.get(slotOut) != null) {
             Command decision = decisions.get(slotOut);
             Command proposal = proposals.get(slotOut);
-            proposals.set(slotOut, null);
+            proposals.put(slotOut, null);
             if (proposal != null && !decision.equals(proposal)) {
                 commandQueue.add(proposal);
                 setState(command, CommandState.REQUESTED);

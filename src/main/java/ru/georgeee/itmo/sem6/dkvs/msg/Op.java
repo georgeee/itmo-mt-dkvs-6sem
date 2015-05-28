@@ -8,11 +8,14 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Op implements ArgsConvertibleExtended {
-    @Getter @ArgsField
+    @Getter
+    @ArgsField
     private final Type type;
-    @Getter @ArgsField
+    @Getter
+    @ArgsField
     private final String key;
-    @Getter @ArgsField
+    @Getter
+    @ArgsField
     private final String value;
 
     @ArgsConstructor
@@ -63,7 +66,7 @@ public class Op implements ArgsConvertibleExtended {
 
     @Override
     public String toString() {
-        return "Op{" +
+        return "{" +
                 "type=" + type +
                 ", key='" + key + '\'' +
                 ", value='" + value + '\'' +

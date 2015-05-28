@@ -4,7 +4,6 @@ import ru.georgeee.itmo.sem6.dkvs.Destination;
 
 public interface Controller {
 
-    void init();
     void start();
     void stop();
     void ping(Destination destination, String token, Runnable onPong);

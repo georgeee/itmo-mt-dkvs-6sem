@@ -3,7 +3,7 @@ package ru.georgeee.itmo.sem6.dkvs.controller;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.georgeee.itmo.sem6.dkvs.Consumer;
+import ru.georgeee.itmo.sem6.dkvs.Consumer2;
 import ru.georgeee.itmo.sem6.dkvs.Destination;
 import ru.georgeee.itmo.sem6.dkvs.config.SystemConfiguration;
 import ru.georgeee.itmo.sem6.dkvs.msg.Message;
@@ -23,10 +23,10 @@ class ConnectionManager {
     @Getter
     private final ConcurrentMap<Destination, ConnectionHandler> connections;
     @Getter
-    private final Consumer<Message> consumer;
+    private final Consumer2<Message, Destination> consumer;
 
 
-    public ConnectionManager(SystemConfiguration systemConfiguration, Destination selfDestination, Consumer<Message> consumer) {
+    public ConnectionManager(SystemConfiguration systemConfiguration, Destination selfDestination, Consumer2<Message, Destination> consumer) {
         this.systemConfiguration = systemConfiguration;
         this.selfDestination = selfDestination;
         this.consumer = consumer;
@@ -36,7 +36,12 @@ class ConnectionManager {
     }
 
     public void send(Message message, Destination destination) {
-        send(new SendTask(message, destination));
+        if (destination.equals(selfDestination)) {
+            log.info("Sending message to (self) {}: {}", destination, message);
+            consumer.consume(message, destination);
+        } else {
+            send(new SendTask(message, destination));
+        }
     }
 
     private void send(SendTask task) {
@@ -77,13 +82,11 @@ class ConnectionManager {
                 try {
                     connectionHandler = ConnectionHandler.acquireConnection(ConnectionManager.this, destination);
                 } catch (IOException | IllegalArgumentException e) {
-                    log.info("Error to acquire a connection", e);
+                    log.debug("Error to acquire a connection to " + destination, e);
+                    log.info("Error to acquire a connection to " + destination);
                 }
                 if (connectionHandler != null) {
                     getReceiveListenersService().submit(connectionHandler);
-                } else {
-                    log.info("Error to connect to node {}", destination);
-                    log.info("Can't send a message (can't acquire a connection to {}): {}", destination, message);
                 }
             }
             if (connectionHandler != null) {

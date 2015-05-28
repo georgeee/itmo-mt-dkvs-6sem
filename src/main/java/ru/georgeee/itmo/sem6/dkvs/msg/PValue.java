@@ -32,6 +32,15 @@ public class PValue implements ArgsConvertible {
     }
 
     @Override
+    public String toString() {
+        return "{" +
+                "ballotNumber=" + ballotNumber +
+                ", slotId=" + slotId +
+                ", command=" + command +
+                '}';
+    }
+
+    @Override
     public int hashCode() {
         int result = ballotNumber.hashCode();
         result = 31 * result + slotId;

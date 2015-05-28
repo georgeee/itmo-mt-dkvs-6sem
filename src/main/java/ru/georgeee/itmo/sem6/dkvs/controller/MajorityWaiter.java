@@ -16,10 +16,10 @@ abstract class MajorityWaiter {
     private final Set<Destination> waitingSet;
 
 
-    MajorityWaiter(Collection<Destination> waitingSet, AbstractInstance instance) {
+    MajorityWaiter(Collection<Destination> originalSet, AbstractInstance instance) {
         this.instance = instance;
-        this.waitingSet = new HashSet<>(waitingSet);
-        this.receivedEnoughPredicate = new CollectionSizePredicate(waitingSet, waitingSet.size() / 2);
+        this.waitingSet = new HashSet<>(originalSet);
+        this.receivedEnoughPredicate = new CollectionSizePredicate(waitingSet, (waitingSet.size() + 1) / 2);
     }
 
     abstract Message getInitMessage();
@@ -42,14 +42,15 @@ abstract class MajorityWaiter {
         waitingSet.clear();
     }
 
-    boolean isReceivedEnough(){
+    boolean isReceivedEnough() {
         return receivedEnoughPredicate.evaluate();
     }
 
-    void removeDestination(String nodeId){
-removeDestination(new Destination(Destination.Type.NODE, nodeId));    }
+    void removeDestination(String nodeId) {
+        removeDestination(new Destination(Destination.Type.NODE, nodeId));
+    }
 
-    void removeDestination(Destination destination){
+    void removeDestination(Destination destination) {
         waitingSet.remove(destination);
     }
 
