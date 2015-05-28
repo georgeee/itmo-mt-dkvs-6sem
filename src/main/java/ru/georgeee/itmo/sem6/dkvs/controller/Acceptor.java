@@ -51,7 +51,7 @@ class Acceptor extends AbstractInstance {
         }
         //Executing non-repeating, cause we have no condition to check
         //Which is expected, assuming that acceptor is kind of memory
-        Message message = new P1bMessageData(getSelfId(), ballotNumber, accepted).createMessage();
+        Message message = new P1bMessageData(getSelfId(), ballotNumber, p1aData.getScoutId(), accepted).createMessage();
         sendToNode(message, p1aData.getLeaderId());
     }
 

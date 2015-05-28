@@ -19,6 +19,7 @@ class Leader extends AbstractInstance {
     private boolean active;
     private final Map<Integer, Command> proposals;
     private int nextCommanderId;
+    private int nextScoutId;
     final Map<Integer, Commander> commanders;
     final Map<Integer, Scout> scouts;
     private final Map<Integer, Command> decisionsCache;
@@ -82,7 +83,7 @@ class Leader extends AbstractInstance {
     }
 
     private void process(P1bMessageData msg) {
-        Scout scout = scouts.get(msg.getBallotNumber().getBallotId());
+        Scout scout = scouts.get(msg.getScoutId());
         if (scout != null) {
             scout.consume(msg);
         }
@@ -99,7 +100,8 @@ class Leader extends AbstractInstance {
     void reportAdopted(BallotNumber b, Set<PValue> pValues) {
         proposals.putAll(getPMax(pValues));
         for (Map.Entry<Integer, Command> entry : proposals.entrySet()) {
-            spawnCommander(new PValue(ballotNumber, entry.getKey(), entry.getValue()));
+            //@TODO not sure, which ballot number should be used here
+            spawnCommander(new PValue(b, entry.getKey(), entry.getValue()));
         }
         active = true;
     }
@@ -140,8 +142,9 @@ class Leader extends AbstractInstance {
         if (scouts.containsKey(ballotNumber.getBallotId())) {
             log.error("Scout for ballot {} is already spawned", ballotNumber);
         } else {
-            Scout scout = new Scout(this, ballotNumber);
-            scouts.put(ballotNumber.getBallotId(), scout);
+            int scoutId = nextScoutId++;
+            Scout scout = new Scout(this, scoutId, ballotNumber);
+            scouts.put(scoutId, scout);
             scout.init();
         }
     }

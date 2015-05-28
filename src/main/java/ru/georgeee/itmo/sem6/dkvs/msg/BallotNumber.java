@@ -40,4 +40,12 @@ public class BallotNumber implements ArgsConvertible, Comparable<BallotNumber> {
     public int compareTo(BallotNumber o) {
         return o.leaderId.equals(leaderId) ? Integer.compare(ballotId, o.ballotId) : leaderId.compareTo(o.leaderId);
     }
+
+    @Override
+    public String toString() {
+        return "{" +
+                ballotId +
+                ", " + leaderId +
+                '}';
+    }
 }

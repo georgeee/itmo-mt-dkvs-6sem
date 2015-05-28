@@ -12,12 +12,14 @@ import java.util.Set;
 
 class Scout extends MajorityWaiter implements Consumer<P1bMessageData> {
     private final Leader leader;
+    private final int scoutId;
     private final BallotNumber b;
     private final Set<PValue> pValues;
 
-    Scout(Leader leader, BallotNumber b) {
+    Scout(Leader leader, int scoutId, BallotNumber b) {
         super(leader.acceptors, leader);
         this.leader = leader;
+        this.scoutId = scoutId;
         this.b = b;
         this.pValues = new HashSet<>();
     }
@@ -46,7 +48,7 @@ class Scout extends MajorityWaiter implements Consumer<P1bMessageData> {
 
     @Override
     protected Message getInitMessage() {
-        return new P1aMessageData(leader.getSelfId(), b).createMessage();
+        return new P1aMessageData(leader.getSelfId(), b, scoutId).createMessage();
     }
 
     @Override

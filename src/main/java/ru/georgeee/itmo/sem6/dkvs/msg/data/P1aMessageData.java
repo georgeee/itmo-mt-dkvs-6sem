@@ -11,11 +11,14 @@ public class P1aMessageData extends AbstractMessageData {
     private final String leaderId;
     @Getter @ArgsField
     private final BallotNumber ballotNumber;
+    @Getter @ArgsField
+    private final int scoutId;
 
     @ArgsConstructor
-    public P1aMessageData(String leaderId, BallotNumber ballotNumber) {
+    public P1aMessageData(String leaderId, BallotNumber ballotNumber, int scoutId) {
         this.leaderId = leaderId;
         this.ballotNumber = ballotNumber;
+        this.scoutId = scoutId;
     }
 
     @Override
