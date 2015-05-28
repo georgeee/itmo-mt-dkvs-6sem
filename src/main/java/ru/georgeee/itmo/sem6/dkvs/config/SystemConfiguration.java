@@ -23,6 +23,8 @@ public class SystemConfiguration {
     private static final String SENDER_POOL_SIZE_KEY = "sender.poolSize";
     private static final String INSTANCE_REPEAT_POOL_SIZE_KEY = "instance.repeat.poolSize";
     private static final String INSTANCE_REPEAT_TIMEOUT_KEY = "instance.repeat.timeout";
+    private static final String LEADER_PING_TIMEOUT_KEY = "leader.ping.timeout";
+    private static final String LEADER_PING_LIMIT_KEY = "leader.ping.limit";
 
     @Getter
     private final Map<String, NodeConfiguration> nodes;
@@ -40,6 +42,10 @@ public class SystemConfiguration {
     private final int instanceRepeatTimeout;
     @Getter
     private final int instanceRepeatPoolSize;
+    @Getter
+    private final int leaderPingTimeout;
+    @Getter
+    private final int leaderPingLimit;
 
     public SystemConfiguration(File propertiesFile) throws ConfigurationException {
         this(new PropertiesConfiguration(propertiesFile));
@@ -63,6 +69,8 @@ public class SystemConfiguration {
         senderPoolSize = configuration.getInt(SENDER_POOL_SIZE_KEY);
         instanceRepeatPoolSize = configuration.getInt(INSTANCE_REPEAT_POOL_SIZE_KEY);
         instanceRepeatTimeout = configuration.getInt(INSTANCE_REPEAT_TIMEOUT_KEY);
+        leaderPingTimeout = configuration.getInt(LEADER_PING_TIMEOUT_KEY);
+        leaderPingLimit = configuration.getInt(LEADER_PING_LIMIT_KEY);
     }
 
     private NodeConfiguration getNode(Configuration configuration, String id) {

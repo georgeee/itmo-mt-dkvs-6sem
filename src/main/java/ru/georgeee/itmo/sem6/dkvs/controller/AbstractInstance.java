@@ -115,6 +115,10 @@ abstract class AbstractInstance implements Consumer<Message>, Runnable {
         }
     }
 
+    protected void addTimerTask(Runnable runnable, int delay){
+        repeatService.scheduleWithFixedDelay(runnable, 0, delay, TimeUnit.MILLISECONDS);
+    }
+
     protected static interface Predicate {
         boolean evaluate();
     }

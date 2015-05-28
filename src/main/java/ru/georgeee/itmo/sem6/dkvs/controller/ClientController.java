@@ -10,7 +10,6 @@ import ru.georgeee.itmo.sem6.dkvs.msg.OpResult;
 import ru.georgeee.itmo.sem6.dkvs.utils.Utils;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -27,7 +26,7 @@ public class ClientController extends AbstractController {
     public ClientController(SystemConfiguration systemConfiguration) {
         super(systemConfiguration);
         this.commandIdCounter = new AtomicInteger();
-        this.id = UUID.randomUUID().toString().substring(0, 6);
+        this.id = Utils.generateUUID().substring(0, 6);
         this.client = new Client(this);
         Utils.putBatch(consumers, client, RESPONSE);
         opResultHandlers = new ConcurrentHashMap<>();

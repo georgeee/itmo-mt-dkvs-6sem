@@ -1,6 +1,7 @@
 package ru.georgeee.itmo.sem6.dkvs.utils;
 
 import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 public class Utils {
@@ -19,5 +20,9 @@ public class Utils {
 
     public static String[] splitToArgs(String line) {
         return line.trim().split("\\s+");
+    }
+
+    public static String generateUUID() {
+        return UUID.randomUUID().toString();
     }
 }

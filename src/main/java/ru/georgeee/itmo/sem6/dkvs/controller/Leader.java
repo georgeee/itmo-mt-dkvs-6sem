@@ -17,11 +17,16 @@ class Leader extends AbstractInstance {
     private static final Logger log = LoggerFactory.getLogger(Leader.class);
     private BallotNumber ballotNumber;
     private boolean active;
+    //Slot id -> command
     private final Map<Integer, Command> proposals;
     private int nextCommanderId;
     private int nextScoutId;
-    final Map<Integer, Commander> commanders;
-    final Map<Integer, Scout> scouts;
+    private final Map<Integer, Commander> commanders;
+    private final Map<Integer, Scout> scouts;
+
+    //Making this field volatile, cause it's observed by PingTask from other thread
+    volatile Destination mainLeader;
+    private int mainLeaderBallotId;
 
     private final Map<Integer, Command> decisionsCache;
     private final List<Destination> replicas;
@@ -43,6 +48,12 @@ class Leader extends AbstractInstance {
                 spawnScout();
             }
         });
+        addTimerTask(new LeaderPingTask(new Runnable() {
+            @Override
+            public void run() {
+                gainControl(mainLeaderBallotId);
+            }
+        }, this, controller), sysConfiguration.getLeaderPingTimeout());
     }
 
     @Override
@@ -90,14 +101,24 @@ class Leader extends AbstractInstance {
         }
     }
 
+    private void gainControl(int prevBallotId) {
+        ballotNumber = new BallotNumber(prevBallotId + 1, getSelfId());
+        spawnScout();
+    }
+
     void reportPreempted(BallotNumber b2) {
         log.info("PREEMPTED ballotNumber={} (current ballotNumber={})", b2, ballotNumber);
-        if (b2.compareTo(ballotNumber) > 0) {
+        int compareResult = b2.compareTo(ballotNumber);
+        if (compareResult != 0) {
             active = false;
-            ballotNumber = new BallotNumber(b2.getBallotId() + 1, getSelfId());
-            spawnScout();
+            if (compareResult > 0) {
+                mainLeaderBallotId = b2.getBallotId();
+                mainLeader = new Destination(Destination.Type.NODE, b2.getLeaderId());
+            } else {
+                gainControl(ballotNumber.getBallotId());
+            }
         } else {
-            log.error("Corrupt PREEMPTED: received {} <= {}", b2, ballotNumber);
+            log.error("Corrupt PREEMPTED: received {} == {}", b2, ballotNumber);
         }
     }
 
@@ -161,6 +182,7 @@ class Leader extends AbstractInstance {
     }
 
     void registerDecision(int slotId, Command command) {
+        log.info("Decided for slot {}, command: {}", slotId, command);
         Message decisionMessage = new DecisionMessageData(slotId, command).createMessage();
         for (Destination replica : replicas) {
             send(decisionMessage, replica);
@@ -176,4 +198,5 @@ class Leader extends AbstractInstance {
     public void unregister(Scout scout) {
         scouts.remove(scout.getScoutId());
     }
+
 }

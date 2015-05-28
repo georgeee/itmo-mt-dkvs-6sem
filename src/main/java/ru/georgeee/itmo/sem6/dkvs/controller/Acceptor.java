@@ -24,6 +24,7 @@ class Acceptor extends AbstractInstance {
     public Acceptor(AbstractController controller) {
         super(controller);
         accepted = new HashSet<>();
+        ballotNumber = new BallotNumber(-1, "<none>");
     }
 
     @Override

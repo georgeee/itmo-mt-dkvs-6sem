@@ -102,6 +102,18 @@ abstract class AbstractController implements Controller {
     }
 
     @Override
+    public String ping(Destination destination, Runnable onPong) {
+        String token = Utils.generateUUID();
+        ping(destination, token, onPong);
+        return token;
+    }
+
+    @Override
+    public void removePingToken(Destination destination, String token) {
+        onPongMap.remove(new ImmutablePair<>(destination, token));
+    }
+
+    @Override
     public void ping(Destination destination, String token, Runnable onPong) {
         if (Utils.containsWhitespace(token)) {
             throw new IllegalArgumentException("Token shouldn't contain whitespace");
