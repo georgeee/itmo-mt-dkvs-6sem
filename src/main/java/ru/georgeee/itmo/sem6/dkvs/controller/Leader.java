@@ -85,6 +85,10 @@ class Leader extends AbstractInstance {
             Message message = new DecisionMessageData(slotId, decisionsCache.get(slotId)).createMessage();
             sendToNode(message, msg.getReplicaId());
         } else {
+            Destination mainLeader = this.mainLeader;
+            if (mainLeader != null) {
+                send(msg.createMessage(), mainLeader);
+            }
             if (!proposals.containsKey(slotId)) {
                 proposals.put(slotId, command);
                 if (active) {
@@ -106,14 +110,18 @@ class Leader extends AbstractInstance {
         spawnScout();
     }
 
+    private void passControl(BallotNumber b2) {
+        this.mainLeaderBallotId = b2.getBallotId();
+        this.mainLeader = new Destination(Destination.Type.NODE, b2.getLeaderId());
+    }
+
     void reportPreempted(BallotNumber b2) {
         log.info("PREEMPTED ballotNumber={} (current ballotNumber={})", b2, ballotNumber);
         int compareResult = b2.compareTo(ballotNumber);
         if (compareResult != 0) {
             active = false;
             if (compareResult > 0) {
-                mainLeaderBallotId = b2.getBallotId();
-                mainLeader = new Destination(Destination.Type.NODE, b2.getLeaderId());
+                passControl(b2);
             } else {
                 gainControl(ballotNumber.getBallotId());
             }

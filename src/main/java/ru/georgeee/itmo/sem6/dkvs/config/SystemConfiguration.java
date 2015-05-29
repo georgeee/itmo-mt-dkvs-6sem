@@ -25,6 +25,7 @@ public class SystemConfiguration {
     private static final String INSTANCE_REPEAT_TIMEOUT_KEY = "instance.repeat.timeout";
     private static final String LEADER_PING_TIMEOUT_KEY = "leader.ping.timeout";
     private static final String LEADER_PING_LIMIT_KEY = "leader.ping.limit";
+    private static final String REPLICA_PROPOSE_LOCAL_ONLY = "replica.proposeLocalOnly";
 
     @Getter
     private final Map<String, NodeConfiguration> nodes;
@@ -46,6 +47,8 @@ public class SystemConfiguration {
     private final int leaderPingTimeout;
     @Getter
     private final int leaderPingLimit;
+    @Getter
+    private final boolean proposeLocalOnly;
 
     public SystemConfiguration(File propertiesFile) throws ConfigurationException {
         this(new PropertiesConfiguration(propertiesFile));
@@ -71,6 +74,7 @@ public class SystemConfiguration {
         instanceRepeatTimeout = configuration.getInt(INSTANCE_REPEAT_TIMEOUT_KEY);
         leaderPingTimeout = configuration.getInt(LEADER_PING_TIMEOUT_KEY);
         leaderPingLimit = configuration.getInt(LEADER_PING_LIMIT_KEY);
+        proposeLocalOnly = configuration.getBoolean(REPLICA_PROPOSE_LOCAL_ONLY);
     }
 
     private NodeConfiguration getNode(Configuration configuration, String id) {

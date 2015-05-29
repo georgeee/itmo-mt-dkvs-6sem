@@ -46,12 +46,25 @@ abstract class AbstractInstance implements Consumer<Message>, Runnable {
      * @param predicate condition
      * @param task      action
      */
+    protected void executeRepeating(Predicate predicate, Runnable task, String commentary, boolean firstRun) {
+        RepeatingTask repeatingTask = new DefaultRepeatingTask(predicate, task, commentary, firstRun);
+        if (firstRun) {
+            repeatingTask.run();
+        } else {
+            setForRepeat(repeatingTask);
+        }
+    }
+
+    private void setForRepeat(RepeatingTask task) {
+        repeatService.schedule(task, repeatTimeout, TimeUnit.MILLISECONDS);
+    }
+
     protected void executeRepeating(Predicate predicate, Runnable task, String commentary) {
-        new RepeatingTask(predicate, task, commentary).run();
+        executeRepeating(predicate, task, commentary, true);
     }
 
     protected void addForExecution(Runnable task) {
-        new RepeatingTask(TRUE_PREDICATE, task, "").run();
+        new OneTimeRepeatingTask(task).run();
     }
 
     /**
@@ -111,11 +124,11 @@ abstract class AbstractInstance implements Consumer<Message>, Runnable {
     private void processRepeat(RepeatingTask task) {
         boolean needRepeat = task.doRepeat();
         if (needRepeat) {
-            repeatService.schedule(task, repeatTimeout, TimeUnit.MILLISECONDS);
+            setForRepeat(task);
         }
     }
 
-    protected void addTimerTask(Runnable runnable, int delay){
+    protected void addTimerTask(Runnable runnable, int delay) {
         repeatService.scheduleWithFixedDelay(runnable, 0, delay, TimeUnit.MILLISECONDS);
     }
 
@@ -123,27 +136,23 @@ abstract class AbstractInstance implements Consumer<Message>, Runnable {
         boolean evaluate();
     }
 
-    private final class RepeatingTask implements Runnable {
+    private class DefaultRepeatingTask extends RepeatingTask {
         private final Predicate predicate;
         private final Runnable runnable;
         private final String commentary;
-        private volatile boolean firstRun = true;
+        private volatile boolean firstRun;
 
-        private RepeatingTask(Predicate predicate, Runnable runnable, String commentary) {
+        private DefaultRepeatingTask(Predicate predicate, Runnable runnable, String commentary, boolean firstRun) {
             this.predicate = predicate;
             this.runnable = runnable;
             this.commentary = commentary;
-        }
-
-        @Override
-        public void run() {
-            queue.add(new Either.Right<Message, RepeatingTask>(this));
+            this.firstRun = firstRun;
         }
 
         public boolean doRepeat() {
             if (firstRun) {
                 firstRun = false;
-                log.info("Executing for the first time task; {}", commentary);
+                log.debug("Executing for the first time task, repeat commentary: {}", commentary);
                 runnable.run();
                 return true;
             }
@@ -154,5 +163,29 @@ abstract class AbstractInstance implements Consumer<Message>, Runnable {
             }
             return false;
         }
+    }
+
+    private class OneTimeRepeatingTask extends RepeatingTask {
+        private final Runnable runnable;
+
+        private OneTimeRepeatingTask(Runnable runnable) {
+            this.runnable = runnable;
+        }
+
+        @Override
+        public boolean doRepeat() {
+            runnable.run();
+            return false;
+        }
+    }
+
+    private abstract class RepeatingTask implements Runnable {
+
+        @Override
+        public void run() {
+            queue.add(new Either.Right<Message, RepeatingTask>(this));
+        }
+
+        public abstract boolean doRepeat();
     }
 }

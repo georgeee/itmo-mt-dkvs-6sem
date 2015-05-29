@@ -21,6 +21,7 @@ import java.util.*;
  */
 class Replica extends AbstractInstance {
     private static final Logger log = LoggerFactory.getLogger(Replica.class);
+    private final boolean proposeLocalOnly;
     private final StateHolder stateHolder;
     private final Queue<Command> commandQueue;
     private final Map<Command, CommandState> commandStates;
@@ -34,7 +35,7 @@ class Replica extends AbstractInstance {
     private int slotIn;
     private int slotOut;
 
-    public Replica(AbstractController controller) {
+    public Replica(ServerController controller) {
         super(controller);
         SystemConfiguration configuration = controller.getSystemConfiguration();
         commandQueue = new ArrayDeque<>();
@@ -45,6 +46,7 @@ class Replica extends AbstractInstance {
         commandStates = new HashMap<>();
         stateHolder = new StateHolderImpl();
         commandResults = new HashMap<>();
+        proposeLocalOnly = configuration.isProposeLocalOnly() && controller.has(Role.LEADER);
     }
 
     private void propose() {
@@ -54,16 +56,30 @@ class Replica extends AbstractInstance {
                 final Message message = new ProposeMessageData(slotIn, command, getSelfId()).createMessage();
                 proposals.put(slotIn, command);
                 setState(command, CommandState.PROPOSED);
+                addForExecution(new Runnable() {
+                    @Override
+                    public void run() {
+                        sendProposals(message, false);
+                    }
+                });
                 executeRepeating(new IsDecidedPredicate(slotIn), new Runnable() {
                     @Override
                     public void run() {
-                        for (Destination leader : leaders) {
-                            send(message, leader);
-                        }
+                        sendProposals(message, true);
                     }
-                }, "waiting for decision for slot " + slotIn);
+                }, "waiting for decision for slot " + slotIn, false);
             }
             ++slotIn;
+        }
+    }
+
+    private void sendProposals(Message message, boolean explicitSendAll) {
+        if (proposeLocalOnly && !explicitSendAll) {
+            send(message, getSelfDestination());
+        } else {
+            for (Destination leader : leaders) {
+                send(message, leader);
+            }
         }
     }
 

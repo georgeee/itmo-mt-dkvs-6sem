@@ -45,6 +45,10 @@ public class ServerController extends AbstractController {
         }
     }
 
+    public boolean has(Role role) {
+        return nodeConfiguration.getRoles().contains(role);
+    }
+
     @Override
     protected Destination.Type getDestinationType() {
         return Destination.Type.NODE;
