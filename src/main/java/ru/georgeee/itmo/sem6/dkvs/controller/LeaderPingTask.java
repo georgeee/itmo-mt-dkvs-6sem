@@ -30,7 +30,7 @@ class LeaderPingTask implements Runnable {
             final Destination mainLeader = leader.mainLeader;
             if (mainLeader != null) {
                 ++counter;
-                if (counter >= limit) {
+                if (counter > limit) {
                     for (int i = pingId - limit - 1; i <= pingId; ++i) {
                         controller.removePingToken(mainLeader, getToken(i));
                     }

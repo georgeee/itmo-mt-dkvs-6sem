@@ -121,7 +121,11 @@ class Leader extends AbstractInstance {
         if (compareResult != 0) {
             active = false;
             if (compareResult > 0) {
-                passControl(b2);
+                if (b2.getLeaderId().equals(getSelfId())) {
+                    gainControl(b2.getBallotId());
+                } else {
+                    passControl(b2);
+                }
             } else {
                 gainControl(ballotNumber.getBallotId());
             }
