@@ -61,7 +61,7 @@ class Acceptor extends AbstractInstance {
         PValue pValue = p2aData.getPValue();
         BallotNumber b = pValue.getBallotNumber();
         if (b.equals(ballotNumber)) {
-            accepted.add(pValue);
+            accept(pValue);
         }
         //Executing non-repeating, cause we have no condition to check
         //Which is expected, assuming that acceptor is kind of memory
@@ -69,5 +69,8 @@ class Acceptor extends AbstractInstance {
         sendToNode(message, p2aData.getLeaderId());
     }
 
+    protected void accept(PValue pValue){
+        accepted.add(pValue);
+    }
 
 }
