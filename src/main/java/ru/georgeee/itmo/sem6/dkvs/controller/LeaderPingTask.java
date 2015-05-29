@@ -1,9 +1,12 @@
 package ru.georgeee.itmo.sem6.dkvs.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.georgeee.itmo.sem6.dkvs.Destination;
 
 class LeaderPingTask implements Runnable {
-    private final static String PREFIX = LeaderPingTask.class + "_";
+    private static final Logger log = LoggerFactory.getLogger(LeaderPingTask.class);
+    private final static String PREFIX = LeaderPingTask.class.getName() + "_";
     private final Runnable gainControlTask;
     private final Leader leader;
     private final AbstractController controller;
@@ -23,29 +26,33 @@ class LeaderPingTask implements Runnable {
 
     @Override
     public void run() {
-        final Destination mainLeader = leader.mainLeader;
-        if (mainLeader != null) {
-            ++counter;
-            if (counter > limit) {
-                for (int i = pingId - limit - 1; i <= pingId; ++i) {
-                    controller.removePingToken(mainLeader, getToken(i));
-                }
-                leader.mainLeader = null;
-                leader.addForExecution(gainControlTask);
-            } else {
-                final int newPingId = ++pingId;
-                controller.removePingToken(mainLeader, getToken(newPingId - limit - 1));
-                controller.ping(mainLeader, getToken(newPingId), new Runnable() {
-                    @Override
-                    public void run() {
-                        counter = 0;
-                        //Removing old ping tokens
-                        controller.removePingToken(mainLeader, getToken(newPingId - limit - 1));
+        try {
+            final Destination mainLeader = leader.mainLeader;
+            if (mainLeader != null) {
+                ++counter;
+                if (counter >= limit) {
+                    for (int i = pingId - limit - 1; i <= pingId; ++i) {
+                        controller.removePingToken(mainLeader, getToken(i));
                     }
-                });
+                    leader.mainLeader = null;
+                    leader.addForExecution(gainControlTask);
+                } else {
+                    final int newPingId = ++pingId;
+                    controller.removePingToken(mainLeader, getToken(newPingId - limit - 1));
+                    controller.ping(mainLeader, getToken(newPingId), new Runnable() {
+                        @Override
+                        public void run() {
+                            counter = 0;
+                            //Removing old ping tokens
+                            controller.removePingToken(mainLeader, getToken(newPingId - limit - 1));
+                        }
+                    });
+                }
+            } else {
+                counter = 0;
             }
-        } else {
-            counter = 0;
+        }catch (Exception e){
+            log.error("Leader ping task execution failed with exception", e);
         }
     }
 
